@@ -1,0 +1,2504 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>리듬 블레이드: 판타지 배틀 (Rhythm Blade Fantasy)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Noto+Sans+KR:wght@400;700;900&family=Orbitron:wght@600;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #080711;
+      --primary: #ff416c;
+      --secondary: #8a2be2;
+      --accent: #00f2fe;
+      --gold: #ffd700;
+      --perfect: #00f2fe;
+      --great: #10e768;
+      --good: #ffb703;
+      --miss: #ef233c;
+      --lane-1: #ff2a5f;
+      --lane-2: #38ef7d;
+      --lane-3: #00d2ff;
+      --lane-4: #ffd200;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      background: var(--bg-dark);
+      color: #fff;
+      font-family: 'Noto Sans KR', sans-serif;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #game-container {
+      position: relative;
+      width: 100%;
+      max-width: 1200px;
+      height: 100%;
+      max-height: 800px;
+      background: #090a16;
+      box-shadow: 0 0 50px rgba(138, 43, 226, 0.35);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    canvas#battleCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: #0c091a;
+    }
+
+    /* UI Overlay Layer */
+    .overlay-ui {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* Top HUD */
+    .top-hud {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 16px 24px;
+      background: linear-gradient(180deg, rgba(8,7,17,0.85) 0%, rgba(8,7,17,0) 100%);
+      pointer-events: auto;
+    }
+
+    .character-status {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      width: 320px;
+    }
+
+    .hero-hud {
+      align-items: flex-start;
+    }
+
+    .boss-hud {
+      align-items: flex-end;
+      text-align: right;
+    }
+
+    .unit-name-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .hero-name {
+      color: #00d2ff;
+      text-shadow: 0 0 10px rgba(0, 210, 255, 0.7);
+    }
+
+    .boss-name {
+      color: #ff3366;
+      text-shadow: 0 0 10px rgba(255, 51, 102, 0.7);
+    }
+
+    .bar-wrapper {
+      position: relative;
+      width: 100%;
+      height: 18px;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 9px;
+      overflow: hidden;
+      box-shadow: inset 0 0 8px rgba(0,0,0,0.8);
+    }
+
+    .hp-bar-fill {
+      height: 100%;
+      width: 100%;
+      transition: width 0.15s ease-out;
+    }
+
+    .hero-hp-fill {
+      background: linear-gradient(90deg, #00b4d8, #00f2fe);
+      box-shadow: 0 0 12px #00f2fe;
+    }
+
+    .boss-hp-fill {
+      background: linear-gradient(90deg, #ff0844, #ffb199);
+      box-shadow: 0 0 12px #ff0844;
+      float: right;
+    }
+
+    .fever-bar-wrapper {
+      position: relative;
+      width: 100%;
+      height: 8px;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 3px;
+    }
+
+    .fever-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #f72585, #ffd700);
+      box-shadow: 0 0 8px #ffd700;
+      transition: width 0.1s linear;
+    }
+
+    .center-hud {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .score-badge {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 26px;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: 2px;
+      text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+    }
+
+    .stage-indicator {
+      font-family: 'Cinzel', serif;
+      font-size: 13px;
+      letter-spacing: 3px;
+      color: var(--gold);
+      background: rgba(0, 0, 0, 0.4);
+      padding: 3px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 215, 0, 0.3);
+    }
+
+    /* Floating feedback texts */
+    .feedback-center {
+      position: absolute;
+      top: 52%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: none;
+    }
+
+    .judgment-text {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 38px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      opacity: 0;
+      transform: scale(0.6);
+      transition: transform 0.08s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.25s;
+      text-shadow: 0 0 20px currentColor;
+    }
+
+    .judgment-text.show {
+      opacity: 1;
+      transform: scale(1.15);
+    }
+
+    .combo-text {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: #ffd700;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.15s ease-out;
+      text-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+    }
+
+    .combo-text.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .fever-active-banner {
+      font-family: 'Cinzel', serif;
+      font-size: 22px;
+      font-weight: 900;
+      color: #fff;
+      background: linear-gradient(90deg, transparent, rgba(255, 65, 108, 0.8), rgba(255, 215, 0, 0.8), transparent);
+      padding: 4px 30px;
+      border-radius: 4px;
+      letter-spacing: 4px;
+      margin-top: 10px;
+      opacity: 0;
+      transform: scale(0.8);
+      transition: all 0.2s;
+      text-shadow: 0 0 10px #ff0055;
+    }
+
+    .fever-active-banner.active {
+      opacity: 1;
+      transform: scale(1);
+      animation: pulseGlow 0.8s infinite alternate;
+    }
+
+    @keyframes pulseGlow {
+      from { text-shadow: 0 0 10px #ffd700; }
+      to { text-shadow: 0 0 25px #ff0077, 0 0 40px #ffd700; }
+    }
+
+    /* Key lane touch/indicator bar at bottom */
+    .mobile-touch-panel {
+      display: none;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      padding: 12px 18px 24px 18px;
+      background: linear-gradient(0deg, rgba(8, 7, 17, 0.95) 0%, rgba(8, 7, 17, 0) 100%);
+      pointer-events: auto;
+    }
+
+    .touch-btn {
+      height: 65px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-family: 'Orbitron', sans-serif;
+      cursor: pointer;
+      transition: all 0.05s;
+    }
+
+    .touch-btn:active, .touch-btn.active {
+      transform: scale(0.95);
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .touch-btn.lane-0 { border-color: var(--lane-1); }
+    .touch-btn.lane-1 { border-color: var(--lane-2); }
+    .touch-btn.lane-2 { border-color: var(--lane-3); }
+    .touch-btn.lane-3 { border-color: var(--lane-4); }
+
+    .touch-btn .btn-key {
+      font-size: 20px;
+      font-weight: 900;
+    }
+    .touch-btn .btn-action {
+      font-size: 11px;
+      color: #bbb;
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+
+    /* Modals & Screens */
+    .screen-modal {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(6, 5, 14, 0.88);
+      backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 24px;
+      text-align: center;
+      transition: opacity 0.3s ease;
+    }
+
+    .screen-modal.hidden {
+      display: none;
+    }
+
+    .game-logo {
+      font-family: 'Cinzel', serif;
+      font-size: 44px;
+      font-weight: 900;
+      letter-spacing: 4px;
+      background: linear-gradient(135deg, #00f2fe 0%, #ff416c 60%, #ffd700 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 6px;
+      text-shadow: 0 0 30px rgba(255, 65, 108, 0.5);
+    }
+
+    .game-subtitle {
+      font-size: 16px;
+      color: #aaa;
+      letter-spacing: 5px;
+      margin-bottom: 24px;
+      text-transform: uppercase;
+    }
+
+    .menu-card {
+      background: rgba(22, 19, 44, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 16px;
+      padding: 26px 36px;
+      max-width: 580px;
+      width: 100%;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    .key-guide-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin: 20px 0;
+    }
+
+    .key-guide-item {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 10px 6px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .key-guide-item .kbd {
+      display: inline-block;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 20px;
+      font-weight: 900;
+      color: #ffd700;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 4px 12px;
+      border-radius: 6px;
+      border: 1px solid #ffd700;
+      margin-bottom: 6px;
+    }
+
+    .key-guide-item .desc {
+      font-size: 12px;
+      color: #ddd;
+    }
+
+    .stage-select-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin: 20px 0;
+      max-height: 230px;
+      overflow-y: auto;
+    }
+
+    .stage-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 18px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+    }
+
+    .stage-card:hover, .stage-card.selected {
+      background: rgba(138, 43, 226, 0.35);
+      border-color: #00f2fe;
+      transform: translateX(4px);
+    }
+
+    .stage-info-title {
+      font-weight: 700;
+      font-size: 15px;
+      color: #fff;
+    }
+
+    .stage-info-desc {
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 2px;
+    }
+
+    .stage-meta {
+      text-align: right;
+    }
+
+    .stage-bpm {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 13px;
+      color: #ffd700;
+    }
+
+    .stage-diff {
+      font-size: 11px;
+      color: #ff3366;
+      font-weight: 700;
+    }
+
+    .btn {
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      padding: 12px 32px;
+      border-radius: 30px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      outline: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #ff416c, #8a2be2);
+      color: #fff;
+      box-shadow: 0 0 20px rgba(255, 65, 108, 0.4);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 0 30px rgba(255, 65, 108, 0.8);
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: #eee;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Result Screen Specifics */
+    .result-rank {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 72px;
+      font-weight: 900;
+      letter-spacing: 4px;
+      margin: 10px 0;
+      text-shadow: 0 0 30px currentColor;
+    }
+
+    .rank-sss { color: #ffd700; }
+    .rank-s { color: #00f2fe; }
+    .rank-a { color: #10e768; }
+    .rank-b { color: #ffb703; }
+    .rank-c { color: #888; }
+    .rank-f { color: #ef233c; }
+
+    .result-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      text-align: left;
+      margin: 16px 0 24px;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 14px 20px;
+      border-radius: 10px;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: #bbb;
+    }
+
+    .stat-val {
+      font-weight: 700;
+      color: #fff;
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    /* Small Screen responsiveness */
+    @media (max-width: 768px) {
+      .game-logo { font-size: 28px; }
+      .menu-card { padding: 18px 20px; }
+      .top-hud { padding: 10px 14px; }
+      .character-status { width: 140px; }
+      .score-badge { font-size: 18px; }
+      .mobile-touch-panel { display: grid; }
+      .key-guide-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="game-container">
+    <canvas id="battleCanvas"></canvas>
+
+    <!-- UI Overlay Layer -->
+    <div class="overlay-ui">
+      <!-- Top HUD -->
+      <div class="top-hud">
+        <!-- Hero Status -->
+        <div class="character-status hero-hud">
+          <div class="unit-name-row">
+            <span class="hero-name">⚔️ 리듬 기사 아서</span>
+            <span id="heroHpText" style="font-size:12px; color:#aaa;">1000 / 1000</span>
+          </div>
+          <div class="bar-wrapper">
+            <div id="heroHpBar" class="hp-bar-fill hero-hp-fill" style="width: 100%;"></div>
+          </div>
+          <!-- Fever/Awakening gauge -->
+          <div class="fever-bar-wrapper" title="리듬 버스트 게이지">
+            <div id="feverBar" class="fever-bar-fill"></div>
+          </div>
+        </div>
+
+        <!-- Center Score & Stage -->
+        <div class="center-hud">
+          <div class="stage-indicator" id="stageNameBadge">STAGE 1 : 숲속의 고블린 킹</div>
+          <div class="score-badge" id="scoreDisplay">0000000</div>
+          <div class="accuracy-text" id="accDisplay" style="font-size:12px; color:#aaa; font-family:'Orbitron';">100.0%</div>
+        </div>
+
+        <!-- Boss Status -->
+        <div class="character-status boss-hud">
+          <div class="unit-name-row">
+            <span id="bossHpText" style="font-size:12px; color:#aaa;">3000 / 3000</span>
+            <span class="boss-name" id="bossNameDisplay">💀 고블린 로드</span>
+          </div>
+          <div class="bar-wrapper">
+            <div id="bossHpBar" class="hp-bar-fill boss-hp-fill" style="width: 100%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center Floating Feedback (Combo & Judgment) -->
+      <div class="feedback-center">
+        <div id="judgmentText" class="judgment-text">PERFECT</div>
+        <div id="comboText" class="combo-text">12 COMBO!</div>
+        <div id="feverBanner" class="fever-active-banner">⚡ RHYTHM BURST! ⚡</div>
+      </div>
+
+      <!-- Touch Controls for Mobile / Tablet -->
+      <div class="mobile-touch-panel" id="touchPanel">
+        <div class="touch-btn lane-0" data-lane="0">
+          <span class="btn-key">D</span>
+          <span class="btn-action">쾌속 베기</span>
+        </div>
+        <div class="touch-btn lane-1" data-lane="1">
+          <span class="btn-key">F</span>
+          <span class="btn-action">강타 연타</span>
+        </div>
+        <div class="touch-btn lane-2" data-lane="2">
+          <span class="btn-key">J</span>
+          <span class="btn-action">마법 참격</span>
+        </div>
+        <div class="touch-btn lane-3" data-lane="3">
+          <span class="btn-key">K</span>
+          <span class="btn-action">성검 방패</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Start / Stage Select Modal -->
+    <div id="startScreen" class="screen-modal">
+      <div class="game-logo">RHYTHM BLADE</div>
+      <div class="game-subtitle">Fantasy Action Rhythm Game</div>
+
+      <div class="menu-card">
+        <h3 style="margin-bottom: 8px; color: #00f2fe;">스테이지 선택 (Select Stage)</h3>
+        <p style="font-size: 13px; color: #bbb;">비트에 맞춰 공격하여 적 보스를 격파하세요!</p>
+
+        <div class="stage-select-list">
+          <div class="stage-card selected" data-stage="0">
+            <div>
+              <div class="stage-info-title">1장: 비트 우거진 숲 (Forest Goblin)</div>
+              <div class="stage-info-desc">가벼운 리듬으로 감각을 깨우는 고블린 군주와의 대결</div>
+            </div>
+            <div class="stage-meta">
+              <div class="stage-bpm">120 BPM</div>
+              <div class="stage-diff" style="color:#10e768;">NORMAL</div>
+            </div>
+          </div>
+
+          <div class="stage-card" data-stage="1">
+            <div>
+              <div class="stage-info-title">2장: 망령의 지하 묘소 (Crypt Necromancer)</div>
+              <div class="stage-info-desc">빠른 신스 비트와 함께 몰아치는 저주받은 흑마법사</div>
+            </div>
+            <div class="stage-meta">
+              <div class="stage-bpm">138 BPM</div>
+              <div class="stage-diff" style="color:#ffb703;">HARD</div>
+            </div>
+          </div>
+
+          <div class="stage-card" data-stage="2">
+            <div>
+              <div class="stage-info-title">3장: 업화의 심연 용궁 (Inferno Crimson Dragon)</div>
+              <div class="stage-info-desc">궁극의 스피드와 연속 폭타! 화염의 드래곤 로드 토벌</div>
+            </div>
+            <div class="stage-meta">
+              <div class="stage-bpm">156 BPM</div>
+              <div class="stage-diff" style="color:#ff0844;">EXPERT</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="key-guide-grid">
+          <div class="key-guide-item">
+            <span class="kbd">D</span>
+            <div class="desc">쾌속참 (좌)</div>
+          </div>
+          <div class="key-guide-item">
+            <span class="kbd">F</span>
+            <div class="desc">강타 (중앙좌)</div>
+          </div>
+          <div class="key-guide-item">
+            <span class="kbd">J</span>
+            <div class="desc">마검참 (중앙우)</div>
+          </div>
+          <div class="key-guide-item">
+            <span class="kbd">K</span>
+            <div class="desc">천벌 (우)</div>
+          </div>
+        </div>
+
+        <div style="font-size: 12px; color: #888; margin-bottom: 16px;">
+          키보드 [D, F, J, K] 키 또는 모바일 화면 하단 버튼으로 플레이하세요!
+        </div>
+
+        <button id="btnStartGame" class="btn btn-primary" style="width: 100%; font-size: 18px;">
+          ⚔️ 전투 개시 (PLAY NOW)
+        </button>
+      </div>
+    </div>
+
+    <!-- Victory / Defeat Result Modal -->
+    <div id="resultScreen" class="screen-modal hidden">
+      <div id="resultTitle" style="font-family:'Cinzel'; font-size:36px; font-weight:900; color:var(--gold); text-shadow:0 0 20px #ffd700;">
+        VICTORY!
+      </div>
+      <div id="resultSubtitle" style="font-size:14px; color:#ccc; letter-spacing:3px; margin-bottom:12px;">
+        보스를 완전히 섬멸했습니다!
+      </div>
+
+      <div class="menu-card" style="max-width: 480px;">
+        <div id="resultRank" class="result-rank rank-sss">SSS</div>
+
+        <div class="result-stats-grid">
+          <div class="stat-row">
+            <span>최종 점수:</span>
+            <span class="stat-val" id="resScore">0</span>
+          </div>
+          <div class="stat-row">
+            <span>정확도:</span>
+            <span class="stat-val" id="resAccuracy">0%</span>
+          </div>
+          <div class="stat-row">
+            <span>최대 콤보:</span>
+            <span class="stat-val" id="resMaxCombo">0</span>
+          </div>
+          <div class="stat-row">
+            <span>PERFECT 판정:</span>
+            <span class="stat-val" style="color:var(--perfect);" id="resPerfect">0</span>
+          </div>
+          <div class="stat-row">
+            <span>GREAT 판정:</span>
+            <span class="stat-val" style="color:var(--great);" id="resGreat">0</span>
+          </div>
+          <div class="stat-row">
+            <span>GOOD 판정:</span>
+            <span class="stat-val" style="color:var(--good);" id="resGood">0</span>
+          </div>
+          <div class="stat-row">
+            <span>MISS 판정:</span>
+            <span class="stat-val" style="color:var(--miss);" id="resMiss">0</span>
+          </div>
+          <div class="stat-row">
+            <span>입힌 총 데미지:</span>
+            <span class="stat-val" style="color:#ff3366;" id="resDamage">0</span>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:12px;">
+          <button id="btnRetry" class="btn btn-primary" style="flex:1;">
+            🔄 다시 도전
+          </button>
+          <button id="btnToMenu" class="btn btn-secondary" style="flex:1;">
+            🏠 스테이지 목록
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       SYNTHESIZER & SOUND ENGINE (Web Audio API)
+       Pure procedurally generated fantasy electro beats, slashes & spell impacts!
+       ========================================================================== */
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.musicGain = null;
+        this.sfxGain = null;
+        this.masterGain = null;
+        this.isPlayingBGM = false;
+        this.currentBpm = 120;
+        this.stepTimer = null;
+        this.currentStep = 0;
+        this.audioStartTime = 0;
+        this.currentTrack = null;
+      }
+
+      init() {
+        if (this.ctx) return;
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        this.ctx = new AudioContext();
+
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.gain.setValueAtTime(0.85, this.ctx.currentTime);
+        this.masterGain.connect(this.ctx.destination);
+
+        this.musicGain = this.ctx.createGain();
+        this.musicGain.gain.setValueAtTime(0.65, this.ctx.currentTime);
+        this.musicGain.connect(this.masterGain);
+
+        this.sfxGain = this.ctx.createGain();
+        this.sfxGain.gain.setValueAtTime(0.7, this.ctx.currentTime);
+        this.sfxGain.connect(this.masterGain);
+      }
+
+      resume() {
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      // SFX: Hit sound per judgment
+      playHitSfx(type, lane = 0) {
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+
+        // Pitched blip / blade slice
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.connect(gain);
+        gain.connect(this.sfxGain);
+
+        const lanePitches = [440, 554.37, 659.25, 880]; // A4, C#5, E5, A5
+        const baseFreq = lanePitches[lane % 4] || 440;
+
+        if (type === 'PERFECT') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(baseFreq * 1.5, now);
+          osc.frequency.exponentialRampToValueAtTime(baseFreq * 3, now + 0.1);
+          gain.gain.setValueAtTime(0.35, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+          osc.start(now);
+          osc.stop(now + 0.15);
+          this.playMetalClang(now, 0.4);
+        } else if (type === 'GREAT') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(baseFreq * 1.2, now);
+          osc.frequency.exponentialRampToValueAtTime(baseFreq * 2, now + 0.1);
+          gain.gain.setValueAtTime(0.28, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
+          osc.start(now);
+          osc.stop(now + 0.13);
+        } else if (type === 'GOOD') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(baseFreq, now);
+          osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.4, now + 0.1);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+          osc.start(now);
+          osc.stop(now + 0.1);
+        } else {
+          // Miss dull sound
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(130, now);
+          osc.frequency.exponentialRampToValueAtTime(60, now + 0.2);
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+          osc.start(now);
+          osc.stop(now + 0.2);
+        }
+      }
+
+      playMetalClang(time, vol = 0.3) {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(1200, time);
+        osc.frequency.exponentialRampToValueAtTime(3200, time + 0.08);
+        gain.gain.setValueAtTime(vol * 0.4, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.08);
+        osc.connect(gain);
+        gain.connect(this.sfxGain);
+        osc.start(time);
+        osc.stop(time + 0.08);
+      }
+
+      playFeverSfx() {
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+        notes.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.06);
+          gain.gain.setValueAtTime(0.3, now + idx * 0.06);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.3);
+          osc.connect(gain);
+          gain.connect(this.sfxGain);
+          osc.start(now + idx * 0.06);
+          osc.stop(now + idx * 0.06 + 0.35);
+        });
+      }
+
+      playBossHurtSfx() {
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const noise = this.ctx.createBufferSource();
+        const buffer = this.ctx.createBuffer(1, this.ctx.sampleRate * 0.15, this.ctx.sampleRate);
+        const output = buffer.getChannelData(0);
+        for (let i = 0; i < buffer.length; i++) {
+          output[i] = Math.random() * 2 - 1;
+        }
+        noise.buffer = buffer;
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(800, now);
+        filter.frequency.exponentialRampToValueAtTime(150, now + 0.15);
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.sfxGain);
+        noise.start(now);
+      }
+
+      // Procedural Dynamic Synthesizer Music (Drum machine + Bass + Fantasy Synth Lead)
+      startBGM(bpm, stageIndex) {
+        this.stopBGM();
+        this.currentBpm = bpm;
+        this.audioStartTime = this.ctx.currentTime;
+        this.isPlayingBGM = true;
+        this.currentStep = 0;
+
+        const secondsPerStep = (60 / this.currentBpm) / 4; // 16th notes
+        let nextNoteTime = this.ctx.currentTime + 0.1;
+
+        // Stage melodic scales
+        const scales = [
+          // Stage 1: A Minor Adventurous
+          { root: 220, bass: [220, 220, 261.63, 196], melody: [440, 523.25, 659.25, 587.33, 440, 392, 440, 659.25] },
+          // Stage 2: D Minor Dark Gothic
+          { root: 146.83, bass: [146.83, 174.61, 130.81, 164.81], melody: [587.33, 523.25, 466.16, 440, 587.33, 698.46, 659.25, 587.33] },
+          // Stage 3: E Phrygian / Epic Dragon Battle
+          { root: 164.81, bass: [164.81, 174.61, 196, 164.81], melody: [659.25, 698.46, 783.99, 880, 783.99, 698.46, 659.25, 622.25] }
+        ];
+        const scale = scales[stageIndex % scales.length];
+
+        const scheduler = () => {
+          if (!this.isPlayingBGM) return;
+
+          while (nextNoteTime < this.ctx.currentTime + 0.25) {
+            this.scheduleStep(nextNoteTime, this.currentStep, scale);
+            nextNoteTime += secondsPerStep;
+            this.currentStep = (this.currentStep + 1) % 64; // 4-bar loop
+          }
+
+          this.stepTimer = setTimeout(scheduler, 40);
+        };
+
+        scheduler();
+      }
+
+      scheduleStep(time, step, scale) {
+        const beatInBar = step % 16;
+        const barIndex = Math.floor(step / 16);
+
+        // 1. Kick Drum (Beat 0, 4, 8, 12 = four on the floor)
+        if (beatInBar % 4 === 0) {
+          this.playKick(time, 0.45);
+        }
+
+        // 2. Snare / Clap (Beat 4, 12)
+        if (beatInBar === 4 || beatInBar === 12) {
+          this.playSnare(time, 0.35);
+        }
+
+        // 3. Hi-Hat (Every 2nd step or 16th note drive)
+        if (beatInBar % 2 === 0) {
+          const hatVol = (beatInBar % 4 === 2) ? 0.22 : 0.12;
+          this.playHiHat(time, hatVol);
+        }
+
+        // 4. Bassline (8th notes)
+        if (beatInBar % 2 === 0) {
+          const bassNote = scale.bass[barIndex % scale.bass.length];
+          this.playSynthBass(time, bassNote, (60 / this.currentBpm) / 2 * 0.9);
+        }
+
+        // 5. Synth Melody
+        if (beatInBar % 2 === 0 && Math.random() > 0.15) {
+          const melNote = scale.melody[(step / 2) % scale.melody.length];
+          this.playLeadSynth(time, melNote, (60 / this.currentBpm) / 2 * 0.7);
+        }
+      }
+
+      playKick(time, vol = 0.4) {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.frequency.setValueAtTime(150, time);
+        osc.frequency.exponentialRampToValueAtTime(45, time + 0.12);
+        gain.gain.setValueAtTime(vol, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.15);
+        osc.connect(gain);
+        gain.connect(this.musicGain);
+        osc.start(time);
+        osc.stop(time + 0.16);
+      }
+
+      playSnare(time, vol = 0.3) {
+        // Noise buffer
+        const noise = this.ctx.createBufferSource();
+        const buffer = this.ctx.createBuffer(1, this.ctx.sampleRate * 0.12, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < buffer.length; i++) data[i] = Math.random() * 2 - 1;
+        noise.buffer = buffer;
+
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.setValueAtTime(1000, time);
+
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(vol, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.15);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.musicGain);
+        noise.start(time);
+        noise.stop(time + 0.16);
+
+        // Body tone
+        const osc = this.ctx.createOscillator();
+        const oscGain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(220, time);
+        osc.frequency.exponentialRampToValueAtTime(80, time + 0.08);
+        oscGain.gain.setValueAtTime(vol * 0.6, time);
+        oscGain.gain.exponentialRampToValueAtTime(0.001, time + 0.09);
+        osc.connect(oscGain);
+        oscGain.connect(this.musicGain);
+        osc.start(time);
+        osc.stop(time + 0.09);
+      }
+
+      playHiHat(time, vol = 0.15) {
+        const noise = this.ctx.createBufferSource();
+        const buffer = this.ctx.createBuffer(1, this.ctx.sampleRate * 0.04, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < buffer.length; i++) data[i] = Math.random() * 2 - 1;
+        noise.buffer = buffer;
+
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(8000, time);
+
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(vol, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.04);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.musicGain);
+        noise.start(time);
+        noise.stop(time + 0.05);
+      }
+
+      playSynthBass(time, freq, dur) {
+        const osc = this.ctx.createOscillator();
+        const filter = this.ctx.createBiquadFilter();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(freq / 2, time);
+
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(450, time);
+        filter.frequency.exponentialRampToValueAtTime(150, time + dur);
+
+        gain.gain.setValueAtTime(0.28, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.musicGain);
+
+        osc.start(time);
+        osc.stop(time + dur);
+      }
+
+      playLeadSynth(time, freq, dur) {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, time);
+
+        gain.gain.setValueAtTime(0.18, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
+
+        osc.connect(gain);
+        gain.connect(this.musicGain);
+
+        osc.start(time);
+        osc.stop(time + dur);
+      }
+
+      stopBGM() {
+        this.isPlayingBGM = false;
+        if (this.stepTimer) {
+          clearTimeout(this.stepTimer);
+          this.stepTimer = null;
+        }
+      }
+    }
+
+    /* ==========================================================================
+       GAME ENGINE & BATTLE LOGIC
+       ========================================================================== */
+    const STAGE_CONFIGS = [
+      {
+        id: 0,
+        name: "STAGE 1 : 비트 우거진 숲",
+        bossName: "고블린 로드 고르락",
+        bossColor: "#38ef7d",
+        bossMaxHp: 3200,
+        bpm: 120,
+        durationBeats: 160, // ~80 seconds
+        noteSpeed: 480, // pixels per second
+        bossAttackInterval: 8, // boss counters every N misses
+      },
+      {
+        id: 1,
+        name: "STAGE 2 : 망령의 지하 묘소",
+        bossName: "언데드 리치 모르간",
+        bossColor: "#9d4edd",
+        bossMaxHp: 4800,
+        bpm: 138,
+        durationBeats: 192,
+        noteSpeed: 540,
+        bossAttackInterval: 6,
+      },
+      {
+        id: 2,
+        name: "STAGE 3 : 업화의 심연 용궁",
+        bossName: "진홍빛 멸룡 이그니스",
+        bossColor: "#ff0844",
+        bossMaxHp: 6500,
+        bpm: 156,
+        durationBeats: 224,
+        noteSpeed: 620,
+        bossAttackInterval: 4,
+      }
+    ];
+
+    class RhythmBladeGame {
+      constructor() {
+        this.canvas = document.getElementById('battleCanvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.sound = new SoundEngine();
+
+        this.stageIndex = 0;
+        this.stage = STAGE_CONFIGS[0];
+
+        // State
+        this.isPlaying = false;
+        this.isGameOver = false;
+        this.gameTime = 0; // seconds elapsed
+        this.lastFrameTime = performance.now();
+
+        // Hero Stats
+        this.heroMaxHp = 1000;
+        this.heroHp = 1000;
+        this.heroFever = 0; // 0 ~ 100
+        this.isFeverActive = false;
+        this.feverDuration = 0;
+        this.heroAnimState = 'idle'; // 'idle', 'slash1', 'slash2', 'magic', 'shield', 'hit'
+        this.heroAnimTimer = 0;
+
+        // Boss Stats
+        this.bossMaxHp = 3000;
+        this.bossHp = 3000;
+        this.bossAnimState = 'idle'; // 'idle', 'attack', 'hit', 'cast'
+        this.bossAnimTimer = 0;
+
+        // Rhythm & Scoring
+        this.notes = [];
+        this.score = 0;
+        this.combo = 0;
+        this.maxCombo = 0;
+        this.totalNotesHit = 0;
+        this.perfectCount = 0;
+        this.greatCount = 0;
+        this.goodCount = 0;
+        this.missCount = 0;
+        this.totalDamageDealt = 0;
+
+        // Visual FX
+        this.particles = [];
+        this.floatingTexts = [];
+        this.slashTrails = [];
+        this.screenShake = 0;
+        this.beatPulse = 0;
+
+        // Lanes (4 lanes: D, F, J, K)
+        this.laneCount = 4;
+        this.laneKeys = ['d', 'f', 'j', 'k'];
+        this.laneKeyCodes = ['KeyD', 'KeyF', 'KeyJ', 'KeyK'];
+        this.laneColors = ['#ff2a5f', '#38ef7d', '#00d2ff', '#ffd200'];
+        this.laneActions = ['쾌속베기', '강타', '마법참격', '성검방패'];
+
+        // Key states
+        this.pressedLanes = [false, false, false, false];
+
+        // Window Judgment Timings (ms)
+        this.JUDGMENT = {
+          PERFECT: 0.055, // +/- 55ms
+          GREAT: 0.100,   // +/- 100ms
+          GOOD: 0.150,    // +/- 150ms
+          MISS: 0.220     // > 150ms
+        };
+
+        this.initDOM();
+        this.bindEvents();
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+
+        // Start render loop
+        requestAnimationFrame((t) => this.loop(t));
+      }
+
+      initDOM() {
+        this.heroHpBar = document.getElementById('heroHpBar');
+        this.heroHpText = document.getElementById('heroHpText');
+        this.bossHpBar = document.getElementById('bossHpBar');
+        this.bossHpText = document.getElementById('bossHpText');
+        this.bossNameDisplay = document.getElementById('bossNameDisplay');
+        this.feverBar = document.getElementById('feverBar');
+        this.feverBanner = document.getElementById('feverBanner');
+        this.scoreDisplay = document.getElementById('scoreDisplay');
+        this.accDisplay = document.getElementById('accDisplay');
+        this.stageNameBadge = document.getElementById('stageNameBadge');
+        this.judgmentText = document.getElementById('judgmentText');
+        this.comboText = document.getElementById('comboText');
+
+        this.startScreen = document.getElementById('startScreen');
+        this.resultScreen = document.getElementById('resultScreen');
+      }
+
+      resize() {
+        const container = document.getElementById('game-container');
+        this.canvas.width = container.clientWidth;
+        this.canvas.height = container.clientHeight;
+
+        // Geometry definitions for Rhythm Section
+        this.rhythmAreaHeight = Math.min(220, this.canvas.height * 0.35);
+        this.rhythmAreaY = this.canvas.height - this.rhythmAreaHeight;
+        this.targetY = this.rhythmAreaY + this.rhythmAreaHeight - 45; // hit judge bar
+      }
+
+      bindEvents() {
+        // Keyboard controls
+        window.addEventListener('keydown', (e) => {
+          if (e.repeat) return;
+          const code = e.code;
+          const idx = this.laneKeyCodes.indexOf(code);
+          if (idx !== -1) {
+            e.preventDefault();
+            this.handleLanePress(idx);
+          }
+        });
+
+        window.addEventListener('keyup', (e) => {
+          const code = e.code;
+          const idx = this.laneKeyCodes.indexOf(code);
+          if (idx !== -1) {
+            this.pressedLanes[idx] = false;
+            this.updateTouchBtnState(idx, false);
+          }
+        });
+
+        // Touch buttons
+        const touchBtns = document.querySelectorAll('.touch-btn');
+        touchBtns.forEach(btn => {
+          const lane = parseInt(btn.dataset.lane, 10);
+          const pressHandler = (e) => {
+            e.preventDefault();
+            this.handleLanePress(lane);
+          };
+          const releaseHandler = (e) => {
+            e.preventDefault();
+            this.pressedLanes[lane] = false;
+            this.updateTouchBtnState(lane, false);
+          };
+
+          btn.addEventListener('touchstart', pressHandler, { passive: false });
+          btn.addEventListener('touchend', releaseHandler, { passive: false });
+          btn.addEventListener('mousedown', pressHandler);
+          btn.addEventListener('mouseup', releaseHandler);
+        });
+
+        // Stage Selection Cards
+        document.querySelectorAll('.stage-card').forEach(card => {
+          card.addEventListener('click', () => {
+            document.querySelectorAll('.stage-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            this.stageIndex = parseInt(card.dataset.stage, 10);
+          });
+        });
+
+        // Start / Retry / Menu Buttons
+        document.getElementById('btnStartGame').addEventListener('click', () => {
+          this.sound.init();
+          this.sound.resume();
+          this.startGame(this.stageIndex);
+        });
+
+        document.getElementById('btnRetry').addEventListener('click', () => {
+          this.sound.resume();
+          this.startGame(this.stageIndex);
+        });
+
+        document.getElementById('btnToMenu').addEventListener('click', () => {
+          this.resultScreen.classList.add('hidden');
+          this.startScreen.classList.remove('hidden');
+        });
+      }
+
+      updateTouchBtnState(lane, active) {
+        const btn = document.querySelector(`.touch-btn.lane-${lane}`);
+        if (btn) {
+          if (active) btn.classList.add('active');
+          else btn.classList.remove('active');
+        }
+      }
+
+      startGame(stageIdx) {
+        this.stageIndex = stageIdx;
+        this.stage = STAGE_CONFIGS[stageIdx];
+
+        this.startScreen.classList.add('hidden');
+        this.resultScreen.classList.add('hidden');
+
+        // Reset game stats
+        this.isPlaying = true;
+        this.isGameOver = false;
+        this.gameTime = 0;
+        this.lastFrameTime = performance.now();
+
+        this.heroHp = this.heroMaxHp;
+        this.bossMaxHp = this.stage.bossMaxHp;
+        this.bossHp = this.bossMaxHp;
+        this.heroFever = 0;
+        this.isFeverActive = false;
+        this.feverDuration = 0;
+
+        this.score = 0;
+        this.combo = 0;
+        this.maxCombo = 0;
+        this.totalNotesHit = 0;
+        this.perfectCount = 0;
+        this.greatCount = 0;
+        this.goodCount = 0;
+        this.missCount = 0;
+        this.totalDamageDealt = 0;
+
+        this.particles = [];
+        this.floatingTexts = [];
+        this.slashTrails = [];
+        this.screenShake = 0;
+
+        // UI text update
+        this.stageNameBadge.textContent = this.stage.name;
+        this.bossNameDisplay.textContent = '💀 ' + this.stage.bossName;
+        this.updateHUD();
+
+        // Generate Rhythm Notes Chart
+        this.generateBeatmap();
+
+        // Start Sound Engine Music
+        this.sound.startBGM(this.stage.bpm, this.stageIndex);
+      }
+
+      generateBeatmap() {
+        this.notes = [];
+        const bpm = this.stage.bpm;
+        const beatInterval = 60 / bpm;
+        const totalBeats = this.stage.durationBeats;
+
+        // Lead-in time of 2.0 seconds before first note arrives
+        const leadIn = 2.0;
+
+        // Rhythmic pattern generation based on musical steps
+        for (let beat = 0; beat < totalBeats; beat++) {
+          const beatTime = leadIn + beat * beatInterval;
+
+          // Standard beat note
+          let lane = Math.floor(Math.random() * 4);
+          this.notes.push({
+            hitTime: beatTime,
+            lane: lane,
+            hit: false,
+            missed: false
+          });
+
+          // Dense patterns in Harder stages: add half-beat / 8th-note bursts
+          if ((this.stageIndex >= 1 && (beat % 2 === 1 || beat % 4 === 3)) ||
+              (this.stageIndex >= 2 && beat % 4 !== 0 && Math.random() > 0.35)) {
+            const subTime = beatTime + beatInterval * 0.5;
+            let subLane = (lane + 1 + Math.floor(Math.random() * 3)) % 4;
+            this.notes.push({
+              hitTime: subTime,
+              lane: subLane,
+              hit: false,
+              missed: false
+            });
+          }
+
+          // Stage 3 16th-note rapid stream rolls
+          if (this.stageIndex === 2 && beat % 8 === 7) {
+            const streamTime = beatTime + beatInterval * 0.25;
+            this.notes.push({
+              hitTime: streamTime,
+              lane: (lane + 2) % 4,
+              hit: false,
+              missed: false
+            });
+          }
+        }
+
+        // Sort by timing
+        this.notes.sort((a, b) => a.hitTime - b.hitTime);
+      }
+
+      handleLanePress(lane) {
+        if (!this.isPlaying || this.isGameOver) return;
+
+        this.pressedLanes[lane] = true;
+        this.updateTouchBtnState(lane, true);
+
+        // Visual lane flash ripple
+        this.createLaneRipple(lane);
+
+        // Find closest candidate note in this lane
+        let bestCandidate = null;
+        let minDiff = Infinity;
+
+        for (let i = 0; i < this.notes.length; i++) {
+          const note = this.notes[i];
+          if (note.hit || note.missed) continue;
+          if (note.lane !== lane) continue;
+
+          const diff = Math.abs(this.gameTime - note.hitTime);
+          if (diff < minDiff && diff <= this.JUDGMENT.MISS) {
+            minDiff = diff;
+            bestCandidate = note;
+          }
+        }
+
+        if (bestCandidate) {
+          this.judgeNote(bestCandidate, minDiff);
+        } else {
+          // Empty swing in rhythm
+          this.triggerHeroAttack(lane, false);
+        }
+      }
+
+      judgeNote(note, diff) {
+        note.hit = true;
+        this.totalNotesHit++;
+
+        let rating = '';
+        let scoreAdd = 0;
+        let damage = 0;
+
+        if (diff <= this.JUDGMENT.PERFECT) {
+          rating = 'PERFECT';
+          scoreAdd = 1000;
+          damage = 120;
+          this.perfectCount++;
+          this.heroFever = Math.min(100, this.heroFever + 4);
+        } else if (diff <= this.JUDGMENT.GREAT) {
+          rating = 'GREAT';
+          scoreAdd = 650;
+          damage = 80;
+          this.greatCount++;
+          this.heroFever = Math.min(100, this.heroFever + 2.5);
+        } else if (diff <= this.JUDGMENT.GOOD) {
+          rating = 'GOOD';
+          scoreAdd = 300;
+          damage = 45;
+          this.goodCount++;
+          this.heroFever = Math.min(100, this.heroFever + 1);
+        } else {
+          rating = 'MISS';
+          this.missCount++;
+          this.combo = 0;
+          this.showFeedback('MISS', 0);
+          this.sound.playHitSfx('MISS', note.lane);
+          this.takeDamage(40);
+          return;
+        }
+
+        // Combo increment
+        this.combo++;
+        if (this.combo > this.maxCombo) this.maxCombo = this.combo;
+
+        // Fever multiplier
+        const feverMult = this.isFeverActive ? 2.0 : 1.0;
+        damage = Math.floor(damage * feverMult * (1 + this.combo * 0.02));
+        scoreAdd = Math.floor(scoreAdd * feverMult * (1 + this.combo * 0.05));
+
+        // Boss damage
+        this.bossHp = Math.max(0, this.bossHp - damage);
+        this.totalDamageDealt += damage;
+        this.score += scoreAdd;
+
+        // Sounds & Visuals
+        this.sound.playHitSfx(rating, note.lane);
+        this.showFeedback(rating, this.combo);
+        this.triggerHeroAttack(note.lane, true, damage);
+
+        // Check if Fever gauge ready to burst
+        if (!this.isFeverActive && this.heroFever >= 100) {
+          this.activateFever();
+        }
+
+        this.updateHUD();
+
+        // Check Boss Defeat
+        if (this.bossHp <= 0) {
+          this.endGame(true);
+        }
+      }
+
+      activateFever() {
+        this.isFeverActive = true;
+        this.feverDuration = 7.0; // 7 seconds
+        this.sound.playFeverSfx();
+        this.feverBanner.classList.add('active');
+        this.screenShake = 12;
+
+        // Burst particles
+        for (let i = 0; i < 40; i++) {
+          this.particles.push(new Particle(
+            this.canvas.width * 0.28,
+            this.canvas.height * 0.45,
+            '#ffd700',
+            (Math.random() - 0.5) * 12,
+            (Math.random() - 0.5) * 12,
+            Math.random() * 4 + 3,
+            1.2
+          ));
+        }
+      }
+
+      triggerHeroAttack(lane, isHit, damage = 0) {
+        const animTypes = ['slash1', 'slash2', 'magic', 'shield'];
+        this.heroAnimState = animTypes[lane % 4];
+        this.heroAnimTimer = 0.22;
+
+        if (isHit) {
+          this.bossAnimState = 'hit';
+          this.bossAnimTimer = 0.18;
+          this.screenShake = Math.max(this.screenShake, this.isFeverActive ? 8 : 4);
+          this.sound.playBossHurtSfx();
+
+          // Spawn Slash Trail & Impact Spark Particles
+          const bossX = this.canvas.width * 0.72;
+          const bossY = this.canvas.height * 0.42;
+
+          this.slashTrails.push({
+            x: bossX + (Math.random() - 0.5) * 60,
+            y: bossY + (Math.random() - 0.5) * 60,
+            angle: (Math.random() - 0.5) * Math.PI,
+            length: 120 + Math.random() * 60,
+            color: this.laneColors[lane],
+            life: 0.2,
+            maxLife: 0.2
+          });
+
+          // Floating damage number
+          this.addFloatingText(`-${damage}`, bossX + (Math.random() - 0.5) * 70, bossY - 40, this.laneColors[lane], 24);
+
+          // Spark particles
+          for (let i = 0; i < 15; i++) {
+            this.particles.push(new Particle(
+              bossX,
+              bossY,
+              this.laneColors[lane],
+              (Math.random() - 0.5) * 10,
+              (Math.random() - 0.5) * 10 - 2,
+              Math.random() * 3 + 2,
+              0.6
+            ));
+          }
+        }
+      }
+
+      takeDamage(amount) {
+        this.heroHp = Math.max(0, this.heroHp - amount);
+        this.heroAnimState = 'hit';
+        this.heroAnimTimer = 0.25;
+        this.screenShake = 10;
+
+        const heroX = this.canvas.width * 0.28;
+        const heroY = this.canvas.height * 0.48;
+        this.addFloatingText(`-${amount}`, heroX, heroY - 40, '#ff2a5f', 22);
+
+        this.updateHUD();
+
+        if (this.heroHp <= 0) {
+          this.endGame(false);
+        }
+      }
+
+      showFeedback(rating, combo) {
+        this.judgmentText.textContent = rating;
+        this.judgmentText.className = 'judgment-text show';
+
+        if (rating === 'PERFECT') this.judgmentText.style.color = 'var(--perfect)';
+        else if (rating === 'GREAT') this.judgmentText.style.color = 'var(--great)';
+        else if (rating === 'GOOD') this.judgmentText.style.color = 'var(--good)';
+        else this.judgmentText.style.color = 'var(--miss)';
+
+        if (combo >= 2) {
+          this.comboText.textContent = `${combo} COMBO!`;
+          this.comboText.className = 'combo-text show';
+        } else {
+          this.comboText.className = 'combo-text';
+        }
+
+        clearTimeout(this.feedbackTimer);
+        this.feedbackTimer = setTimeout(() => {
+          this.judgmentText.classList.remove('show');
+          this.comboText.classList.remove('show');
+        }, 500);
+      }
+
+      addFloatingText(text, x, y, color, size = 20) {
+        this.floatingTexts.push({
+          text, x, y, color, size,
+          vy: -1.8,
+          alpha: 1.0,
+          life: 0.8
+        });
+      }
+
+      createLaneRipple(lane) {
+        const laneW = this.canvas.width / 4;
+        const x = lane * laneW + laneW / 2;
+        const y = this.targetY;
+        for (let i = 0; i < 8; i++) {
+          this.particles.push(new Particle(
+            x, y, this.laneColors[lane],
+            (Math.random() - 0.5) * 5,
+            (Math.random() - 0.5) * 5,
+            Math.random() * 3 + 2,
+            0.35
+          ));
+        }
+      }
+
+      updateHUD() {
+        // Hero HP
+        const heroPct = Math.max(0, (this.heroHp / this.heroMaxHp) * 100);
+        this.heroHpBar.style.width = heroPct + '%';
+        this.heroHpText.textContent = `${Math.ceil(this.heroHp)} / ${this.heroMaxHp}`;
+
+        // Boss HP
+        const bossPct = Math.max(0, (this.bossHp / this.bossMaxHp) * 100);
+        this.bossHpBar.style.width = bossPct + '%';
+        this.bossHpText.textContent = `${Math.ceil(this.bossHp)} / ${this.bossMaxHp}`;
+
+        // Fever
+        this.feverBar.style.width = this.heroFever + '%';
+
+        // Score & Accuracy
+        this.scoreDisplay.textContent = this.score.toString().padStart(7, '0');
+        const total = this.perfectCount + this.greatCount + this.goodCount + this.missCount;
+        let acc = 100.0;
+        if (total > 0) {
+          const weighted = (this.perfectCount * 1.0 + this.greatCount * 0.7 + this.goodCount * 0.4);
+          acc = (weighted / total) * 100;
+        }
+        this.accDisplay.textContent = acc.toFixed(1) + '%';
+      }
+
+      endGame(isVictory) {
+        this.isPlaying = false;
+        this.isGameOver = true;
+        this.sound.stopBGM();
+
+        // Calculate Grade Rank
+        const total = this.perfectCount + this.greatCount + this.goodCount + this.missCount;
+        let acc = 0;
+        if (total > 0) {
+          const weighted = (this.perfectCount * 1.0 + this.greatCount * 0.7 + this.goodCount * 0.4);
+          acc = (weighted / total) * 100;
+        }
+
+        let rank = 'F';
+        let rankClass = 'rank-f';
+
+        if (isVictory) {
+          if (acc >= 98 && this.missCount === 0) { rank = 'SSS'; rankClass = 'rank-sss'; }
+          else if (acc >= 93) { rank = 'S'; rankClass = 'rank-s'; }
+          else if (acc >= 85) { rank = 'A'; rankClass = 'rank-a'; }
+          else if (acc >= 75) { rank = 'B'; rankClass = 'rank-b'; }
+          else { rank = 'C'; rankClass = 'rank-c'; }
+        }
+
+        // Fill Result screen
+        const title = document.getElementById('resultTitle');
+        const subtitle = document.getElementById('resultSubtitle');
+        const rankEl = document.getElementById('resultRank');
+
+        if (isVictory) {
+          title.textContent = 'VICTORY!';
+          title.style.color = 'var(--gold)';
+          subtitle.textContent = `축하합니다! ${this.stage.bossName}을(를) 격퇴했습니다!`;
+        } else {
+          title.textContent = 'DEFEAT...';
+          title.style.color = '#ef233c';
+          subtitle.textContent = '아서 기사가 쓰러졌습니다. 리듬을 다시 맞춰보세요!';
+        }
+
+        rankEl.textContent = rank;
+        rankEl.className = `result-rank ${rankClass}`;
+
+        document.getElementById('resScore').textContent = this.score.toLocaleString();
+        document.getElementById('resAccuracy').textContent = acc.toFixed(1) + '%';
+        document.getElementById('resMaxCombo').textContent = this.maxCombo;
+        document.getElementById('resPerfect').textContent = this.perfectCount;
+        document.getElementById('resGreat').textContent = this.greatCount;
+        document.getElementById('resGood').textContent = this.goodCount;
+        document.getElementById('resMiss').textContent = this.missCount;
+        document.getElementById('resDamage').textContent = this.totalDamageDealt.toLocaleString();
+
+        this.resultScreen.classList.remove('hidden');
+      }
+
+      /* ==========================================================================
+         MAIN UPDATE & RENDER LOOP
+         ========================================================================== */
+      loop(currentTime) {
+        const dt = Math.min((currentTime - this.lastFrameTime) / 1000, 0.1);
+        this.lastFrameTime = currentTime;
+
+        this.update(dt);
+        this.render();
+
+        requestAnimationFrame((t) => this.loop(t));
+      }
+
+      update(dt) {
+        if (!this.isPlaying) return;
+
+        this.gameTime += dt;
+
+        // Fever countdown
+        if (this.isFeverActive) {
+          this.feverDuration -= dt;
+          this.heroFever = Math.max(0, (this.feverDuration / 7.0) * 100);
+          this.feverBar.style.width = this.heroFever + '%';
+          if (this.feverDuration <= 0) {
+            this.isFeverActive = false;
+            this.heroFever = 0;
+            this.feverBanner.classList.remove('active');
+          }
+        }
+
+        // Check missed notes
+        for (let i = 0; i < this.notes.length; i++) {
+          const note = this.notes[i];
+          if (!note.hit && !note.missed && this.gameTime - note.hitTime > this.JUDGMENT.GOOD) {
+            note.missed = true;
+            this.missCount++;
+            this.combo = 0;
+            this.showFeedback('MISS', 0);
+            this.sound.playHitSfx('MISS', note.lane);
+            this.takeDamage(35);
+          }
+        }
+
+        // Check track completion
+        const lastNote = this.notes[this.notes.length - 1];
+        if (lastNote && this.gameTime > lastNote.hitTime + 2.0 && !this.isGameOver) {
+          // If boss alive after all notes finished, decide victory by HP
+          this.endGame(this.bossHp < this.bossMaxHp * 0.4);
+        }
+
+        // Anim timers
+        if (this.heroAnimTimer > 0) {
+          this.heroAnimTimer -= dt;
+          if (this.heroAnimTimer <= 0) this.heroAnimState = 'idle';
+        }
+
+        if (this.bossAnimTimer > 0) {
+          this.bossAnimTimer -= dt;
+          if (this.bossAnimTimer <= 0) this.bossAnimState = 'idle';
+        }
+
+        // Screen shake decay
+        if (this.screenShake > 0) {
+          this.screenShake = Math.max(0, this.screenShake - dt * 25);
+        }
+
+        // Update particles
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+          const p = this.particles[i];
+          p.update(dt);
+          if (p.isDead()) this.particles.splice(i, 1);
+        }
+
+        // Update slash trails
+        for (let i = this.slashTrails.length - 1; i >= 0; i--) {
+          const t = this.slashTrails[i];
+          t.life -= dt;
+          if (t.life <= 0) this.slashTrails.splice(i, 1);
+        }
+
+        // Update floating text
+        for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
+          const ft = this.floatingTexts[i];
+          ft.y += ft.vy;
+          ft.life -= dt;
+          ft.alpha = Math.max(0, ft.life / 0.8);
+          if (ft.life <= 0) this.floatingTexts.splice(i, 1);
+        }
+      }
+
+      render() {
+        const ctx = this.ctx;
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+
+        ctx.save();
+
+        // Screen Shake
+        if (this.screenShake > 0) {
+          const ox = (Math.random() - 0.5) * this.screenShake * 2;
+          const oy = (Math.random() - 0.5) * this.screenShake * 2;
+          ctx.translate(ox, oy);
+        }
+
+        // 1. Draw Fantasy Arena Battle Background
+        this.drawBackground(ctx, w, h);
+
+        // 2. Draw Animated Hero & Boss
+        this.drawCharacters(ctx, w, h);
+
+        // 3. Draw Slash Trails & Battle Particle FX
+        this.drawBattleFX(ctx);
+
+        // 4. Draw Rhythm Lane Track & Incoming Beat Notes
+        this.drawRhythmSection(ctx, w, h);
+
+        // 5. Draw Floating Damage & Combat Texts
+        this.drawFloatingTexts(ctx);
+
+        ctx.restore();
+      }
+
+      drawBackground(ctx, w, h) {
+        // Deep fantasy battle gradient
+        const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+        if (this.stageIndex === 0) {
+          // Lush forest & moonlight
+          bgGrad.addColorStop(0, '#050f14');
+          bgGrad.addColorStop(0.5, '#0a231c');
+          bgGrad.addColorStop(1, '#030807');
+        } else if (this.stageIndex === 1) {
+          // Dark cursed crypt
+          bgGrad.addColorStop(0, '#0e0517');
+          bgGrad.addColorStop(0.5, '#1c0c30');
+          bgGrad.addColorStop(1, '#08030d');
+        } else {
+          // Inferno dragon volcano
+          bgGrad.addColorStop(0, '#170505');
+          bgGrad.addColorStop(0.5, '#330c0c');
+          bgGrad.addColorStop(1, '#0d0202');
+        }
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, w, h);
+
+        // Atmospheric glowing beat pulses
+        const beatProgress = (this.gameTime * (this.stage.bpm / 60)) % 1;
+        const pulse = Math.pow(1 - beatProgress, 3) * (this.isFeverActive ? 0.35 : 0.15);
+
+        const arenaY = h * 0.58;
+
+        // Draw moon / rune seal in sky
+        ctx.save();
+        ctx.translate(w * 0.5, h * 0.25);
+        ctx.strokeStyle = `rgba(255, 255, 255, ${0.1 + pulse})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, 90, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.rotate(this.gameTime * 0.2);
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+          const ang = (i * Math.PI) / 4;
+          ctx.moveTo(Math.cos(ang) * 70, Math.sin(ang) * 70);
+          ctx.lineTo(Math.cos(ang) * 90, Math.sin(ang) * 90);
+        }
+        ctx.stroke();
+        ctx.restore();
+
+        // Arena Platform floor
+        ctx.fillStyle = 'rgba(15, 12, 28, 0.95)';
+        ctx.beginPath();
+        ctx.ellipse(w * 0.5, arenaY, w * 0.45, 65, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = this.isFeverActive ? 'rgba(255, 215, 0, 0.6)' : 'rgba(0, 242, 254, 0.35)';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // Floor rune circle
+        ctx.strokeStyle = `rgba(138, 43, 226, ${0.25 + pulse * 0.4})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(w * 0.5, arenaY, w * 0.35, 45, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      drawCharacters(ctx, w, h) {
+        const heroX = w * 0.28;
+        const heroY = h * 0.52;
+        const bossX = w * 0.72;
+        const bossY = h * 0.48;
+
+        // Shadow under Hero
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.beginPath();
+        ctx.ellipse(heroX, heroY + 45, 40, 14, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Shadow under Boss
+        ctx.beginPath();
+        ctx.ellipse(bossX, bossY + 65, 65, 20, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // DRAW HERO (Arthur the Rhythm Knight)
+        this.renderHero(ctx, heroX, heroY);
+
+        // DRAW BOSS (Based on Stage)
+        this.renderBoss(ctx, bossX, bossY);
+      }
+
+      renderHero(ctx, x, y) {
+        ctx.save();
+        ctx.translate(x, y);
+
+        // Idle bounce with BGM beat
+        const beatFrac = (this.gameTime * (this.stage.bpm / 60)) % 1;
+        const bounce = Math.sin(beatFrac * Math.PI) * 4;
+
+        // Animation offsets
+        let swordAngle = 0.3;
+        let lungeX = 0;
+        let capeFlap = Math.sin(this.gameTime * 8) * 6;
+
+        if (this.heroAnimState === 'slash1') {
+          lungeX = 25;
+          swordAngle = -1.2;
+        } else if (this.heroAnimState === 'slash2') {
+          lungeX = 35;
+          swordAngle = 1.4;
+        } else if (this.heroAnimState === 'magic') {
+          swordAngle = -2.1;
+        } else if (this.heroAnimState === 'hit') {
+          lungeX = -15;
+          swordAngle = -0.5;
+        }
+
+        ctx.translate(lungeX, -bounce);
+
+        // Fever Golden Aura
+        if (this.isFeverActive) {
+          ctx.shadowColor = '#ffd700';
+          ctx.shadowBlur = 25;
+        } else {
+          ctx.shadowColor = '#00f2fe';
+          ctx.shadowBlur = 10;
+        }
+
+        // Hero Cape (Cyan/Purple)
+        ctx.fillStyle = this.isFeverActive ? '#ff0055' : '#7928ca';
+        ctx.beginPath();
+        ctx.moveTo(-10, -15);
+        ctx.quadraticCurveTo(-35 + capeFlap, 10, -25 + capeFlap * 1.5, 40);
+        ctx.lineTo(-8, 30);
+        ctx.closePath();
+        ctx.fill();
+
+        // Hero Armor Body
+        ctx.fillStyle = '#1e293b'; // dark steel
+        ctx.beginPath();
+        ctx.roundRect(-14, -20, 28, 42, 6);
+        ctx.fill();
+
+        // Chestplate Trim
+        ctx.strokeStyle = this.isFeverActive ? '#ffd700' : '#00f2fe';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+
+        // Glowing Core Crest
+        ctx.fillStyle = this.isFeverActive ? '#ffd700' : '#00f2fe';
+        ctx.beginPath();
+        ctx.arc(0, -6, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Hero Head / Helmet
+        ctx.fillStyle = '#334155';
+        ctx.beginPath();
+        ctx.arc(0, -32, 14, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Visor slit
+        ctx.fillStyle = this.isFeverActive ? '#ffd700' : '#00f2fe';
+        ctx.fillRect(-8, -34, 16, 4);
+
+        // Helmet Plume / Feather
+        ctx.fillStyle = this.isFeverActive ? '#ffd700' : '#ff416c';
+        ctx.beginPath();
+        ctx.moveTo(0, -45);
+        ctx.quadraticCurveTo(-15, -60, -25, -50);
+        ctx.quadraticCurveTo(-10, -42, 0, -44);
+        ctx.fill();
+
+        // Legs / Greaves
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(-12, 22, 9, 22);
+        ctx.fillRect(3, 22, 9, 22);
+
+        // Shield (left hand)
+        ctx.fillStyle = '#1e1b4b';
+        ctx.strokeStyle = '#00f2fe';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-16, -10);
+        ctx.lineTo(-28, -5);
+        ctx.lineTo(-26, 20);
+        ctx.lineTo(-16, 28);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Rhythm Blade (right hand)
+        ctx.save();
+        ctx.translate(14, -4);
+        ctx.rotate(swordAngle);
+
+        // Hilt
+        ctx.fillStyle = '#ffd700';
+        ctx.fillRect(-3, 0, 6, 12);
+        ctx.fillRect(-10, 0, 20, 4);
+
+        // Blade (Glowing Cyan or Gold)
+        ctx.fillStyle = this.isFeverActive ? '#fff' : '#e0f7fa';
+        ctx.strokeStyle = this.isFeverActive ? '#ffd700' : '#00d2ff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-4, 0);
+        ctx.lineTo(-3, -65);
+        ctx.lineTo(0, -78);
+        ctx.lineTo(3, -65);
+        ctx.lineTo(4, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.restore();
+        ctx.restore();
+      }
+
+      renderBoss(ctx, x, y) {
+        ctx.save();
+        ctx.translate(x, y);
+
+        const beatFrac = (this.gameTime * (this.stage.bpm / 60)) % 1;
+        const breathe = Math.sin(beatFrac * Math.PI) * 5;
+
+        let bossShakeX = 0;
+        if (this.bossAnimState === 'hit') {
+          bossShakeX = (Math.random() - 0.5) * 16;
+          ctx.filter = 'brightness(1.5)';
+        }
+
+        ctx.translate(bossShakeX, breathe);
+
+        if (this.stageIndex === 0) {
+          // STAGE 1: GOBLIN KING (Bulky green brute with spikes & mace)
+          this.renderGoblinBoss(ctx);
+        } else if (this.stageIndex === 1) {
+          // STAGE 2: LICH NECROMANCER (Floating robed mage with purple flames)
+          this.renderLichBoss(ctx);
+        } else {
+          // STAGE 3: CRIMSON DRAGON (Dragon head, wings, horns, flame breath)
+          this.renderDragonBoss(ctx);
+        }
+
+        ctx.restore();
+      }
+
+      renderGoblinBoss(ctx) {
+        // Goblin Body
+        ctx.shadowColor = '#10e768';
+        ctx.shadowBlur = 15;
+
+        // Big Brute Torso
+        ctx.fillStyle = '#2d6a4f';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 48, 55, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Spiked Shoulder Pads
+        ctx.fillStyle = '#403d39';
+        ctx.beginPath();
+        ctx.arc(-45, -20, 20, 0, Math.PI * 2);
+        ctx.arc(45, -20, 20, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Head & Jaw
+        ctx.fillStyle = '#1b4332';
+        ctx.beginPath();
+        ctx.arc(0, -42, 28, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Pointy Goblin Ears
+        ctx.fillStyle = '#2d6a4f';
+        ctx.beginPath();
+        ctx.moveTo(-25, -45);
+        ctx.lineTo(-65, -60);
+        ctx.lineTo(-30, -30);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(25, -45);
+        ctx.lineTo(65, -60);
+        ctx.lineTo(30, -30);
+        ctx.fill();
+
+        // Red Menacing Eyes
+        ctx.fillStyle = '#ef233c';
+        ctx.shadowColor = '#ef233c';
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(-10, -44, 5, 0, Math.PI * 2);
+        ctx.arc(10, -44, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Tusks
+        ctx.fillStyle = '#f8f9fa';
+        ctx.beginPath();
+        ctx.moveTo(-12, -26);
+        ctx.lineTo(-8, -38);
+        ctx.lineTo(-4, -26);
+        ctx.moveTo(4, -26);
+        ctx.lineTo(8, -38);
+        ctx.lineTo(12, -26);
+        ctx.fill();
+
+        // Spiked Club weapon
+        ctx.fillStyle = '#7f4f24';
+        ctx.save();
+        ctx.rotate(-0.4);
+        ctx.fillRect(-65, -80, 16, 90);
+        ctx.fillStyle = '#495057';
+        ctx.beginPath();
+        ctx.arc(-57, -85, 24, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      renderLichBoss(ctx) {
+        ctx.shadowColor = '#9d4edd';
+        ctx.shadowBlur = 20;
+
+        // Floating Robes
+        ctx.fillStyle = '#10002b';
+        ctx.beginPath();
+        ctx.moveTo(0, -60);
+        ctx.lineTo(-45, 45);
+        ctx.quadraticCurveTo(0, 60, 45, 45);
+        ctx.closePath();
+        ctx.fill();
+
+        // Robe Gold Trims
+        ctx.strokeStyle = '#c77dff';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // Skull Face
+        ctx.fillStyle = '#e0aaff';
+        ctx.beginPath();
+        ctx.arc(0, -45, 22, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Dark Eye Sockets with Purple Fire
+        ctx.fillStyle = '#240046';
+        ctx.beginPath();
+        ctx.arc(-7, -46, 6, 0, Math.PI * 2);
+        ctx.arc(7, -46, 6, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#00f2fe';
+        ctx.beginPath();
+        ctx.arc(-7, -46, 2.5, 0, Math.PI * 2);
+        ctx.arc(7, -46, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Floating Necro Orbs
+        for (let i = 0; i < 3; i++) {
+          const orbAngle = this.gameTime * 3 + (i * Math.PI * 2) / 3;
+          const ox = Math.cos(orbAngle) * 65;
+          const oy = Math.sin(orbAngle) * 35 - 20;
+
+          ctx.fillStyle = '#7b2cbf';
+          ctx.beginPath();
+          ctx.arc(ox, oy, 10, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#e0aaff';
+          ctx.beginPath();
+          ctx.arc(ox, oy, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      renderDragonBoss(ctx) {
+        ctx.shadowColor = '#ff0055';
+        ctx.shadowBlur = 25;
+
+        // Dragon Wings
+        const wingFlap = Math.sin(this.gameTime * 6) * 12;
+        ctx.fillStyle = '#590d22';
+        // Left Wing
+        ctx.beginPath();
+        ctx.moveTo(-10, -20);
+        ctx.lineTo(-85, -80 + wingFlap);
+        ctx.lineTo(-50, 10 + wingFlap);
+        ctx.closePath();
+        ctx.fill();
+        // Right Wing
+        ctx.beginPath();
+        ctx.moveTo(10, -20);
+        ctx.lineTo(85, -80 + wingFlap);
+        ctx.lineTo(50, 10 + wingFlap);
+        ctx.closePath();
+        ctx.fill();
+
+        // Scaled Body
+        ctx.fillStyle = '#800f2f';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 52, 60, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Dragon Neck & Head
+        ctx.fillStyle = '#a4133c';
+        ctx.beginPath();
+        ctx.moveTo(-25, -20);
+        ctx.lineTo(-18, -65);
+        ctx.lineTo(0, -78);
+        ctx.lineTo(18, -65);
+        ctx.lineTo(25, -20);
+        ctx.closePath();
+        ctx.fill();
+
+        // Horns
+        ctx.fillStyle = '#ffb703';
+        ctx.beginPath();
+        ctx.moveTo(-15, -68);
+        ctx.quadraticCurveTo(-45, -95, -60, -110);
+        ctx.quadraticCurveTo(-35, -85, -8, -72);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(15, -68);
+        ctx.quadraticCurveTo(45, -95, 60, -110);
+        ctx.quadraticCurveTo(35, -85, 8, -72);
+        ctx.fill();
+
+        // Glowing Golden Eyes
+        ctx.fillStyle = '#ffd700';
+        ctx.beginPath();
+        ctx.ellipse(-9, -52, 5, 2.5, -0.2, 0, Math.PI * 2);
+        ctx.ellipse(9, -52, 5, 2.5, 0.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Flame sparks from snout
+        if (Math.random() > 0.4) {
+          ctx.fillStyle = '#ff7b00';
+          ctx.beginPath();
+          ctx.arc((Math.random() - 0.5) * 20, -75 - Math.random() * 20, Math.random() * 4 + 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      drawBattleFX(ctx) {
+        // Slash Trails
+        for (let i = 0; i < this.slashTrails.length; i++) {
+          const t = this.slashTrails[i];
+          const progress = t.life / t.maxLife;
+
+          ctx.save();
+          ctx.translate(t.x, t.y);
+          ctx.rotate(t.angle);
+          ctx.strokeStyle = t.color;
+          ctx.lineWidth = 14 * progress;
+          ctx.lineCap = 'round';
+          ctx.shadowColor = t.color;
+          ctx.shadowBlur = 20;
+
+          ctx.beginPath();
+          ctx.moveTo(-t.length / 2, 0);
+          ctx.lineTo(t.length / 2, 0);
+          ctx.stroke();
+
+          // White sharp core line
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 4 * progress;
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // Particles
+        for (let i = 0; i < this.particles.length; i++) {
+          this.particles[i].draw(ctx);
+        }
+      }
+
+      drawRhythmSection(ctx, w, h) {
+        const laneW = w / 4;
+        const startY = this.rhythmAreaY;
+        const trackH = this.rhythmAreaHeight;
+        const targetY = this.targetY;
+        const speed = this.stage.noteSpeed;
+
+        // Background for Rhythm Track with subtle sci-fi glass gradient
+        const trackGrad = ctx.createLinearGradient(0, startY, 0, startY + trackH);
+        trackGrad.addColorStop(0, 'rgba(8, 7, 17, 0.2)');
+        trackGrad.addColorStop(0.3, 'rgba(12, 10, 28, 0.75)');
+        trackGrad.addColorStop(1, 'rgba(6, 5, 15, 0.95)');
+        ctx.fillStyle = trackGrad;
+        ctx.fillRect(0, startY, w, trackH);
+
+        // Divider Lane Lines
+        for (let i = 0; i <= 4; i++) {
+          const lx = i * laneW;
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(lx, startY);
+          ctx.lineTo(lx, startY + trackH);
+          ctx.stroke();
+        }
+
+        // Active Lane Glow on Key Press
+        for (let lane = 0; lane < 4; lane++) {
+          if (this.pressedLanes[lane]) {
+            ctx.fillStyle = this.laneColors[lane];
+            ctx.globalAlpha = 0.18;
+            ctx.fillRect(lane * laneW, startY, laneW, trackH);
+            ctx.globalAlpha = 1.0;
+          }
+        }
+
+        // Target Judgement Line & Hit Circles
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(0, targetY);
+        ctx.lineTo(w, targetY);
+        ctx.stroke();
+
+        // 4 Hit Target Rings at Judgment Line
+        for (let lane = 0; lane < 4; lane++) {
+          const cx = lane * laneW + laneW / 2;
+          const color = this.laneColors[lane];
+          const isPressed = this.pressedLanes[lane];
+
+          ctx.save();
+          ctx.shadowColor = color;
+          ctx.shadowBlur = isPressed ? 25 : 12;
+
+          // Target outer circle
+          ctx.strokeStyle = color;
+          ctx.lineWidth = isPressed ? 4.5 : 3;
+          ctx.beginPath();
+          ctx.arc(cx, targetY, isPressed ? 27 : 24, 0, Math.PI * 2);
+          ctx.stroke();
+
+          // Target inner fill if pressed
+          if (isPressed) {
+            ctx.fillStyle = color;
+            ctx.globalAlpha = 0.4;
+            ctx.fill();
+            ctx.globalAlpha = 1.0;
+          }
+
+          // Key Labels on Judgment Line
+          ctx.fillStyle = '#ffffff';
+          ctx.font = '900 16px Orbitron';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(this.laneKeys[lane].toUpperCase(), cx, targetY);
+
+          // Action Name below key
+          ctx.font = '700 11px Noto Sans KR';
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+          ctx.fillText(this.laneActions[lane], cx, targetY + 28);
+
+          ctx.restore();
+        }
+
+        // Render Incoming Falling Notes
+        for (let i = 0; i < this.notes.length; i++) {
+          const note = this.notes[i];
+          if (note.hit || note.missed) continue;
+
+          // Calculate Y position based on time delta
+          const timeToHit = note.hitTime - this.gameTime;
+          const noteY = targetY - (timeToHit * speed);
+
+          // Only render visible notes on screen
+          if (noteY < startY - 40 || noteY > targetY + 80) continue;
+
+          const lane = note.lane;
+          const nx = lane * laneW + laneW / 2;
+          const color = this.laneColors[lane];
+
+          ctx.save();
+          ctx.shadowColor = color;
+          ctx.shadowBlur = 18;
+
+          // Note Body: Action Crystal Diamond
+          const noteRadius = 22;
+          const grad = ctx.createRadialGradient(nx, noteY, 2, nx, noteY, noteRadius);
+          grad.addColorStop(0, '#ffffff');
+          grad.addColorStop(0.4, color);
+          grad.addColorStop(1, 'rgba(0, 0, 0, 0.5)');
+
+          ctx.fillStyle = grad;
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 2.5;
+
+          // Diamond Note Shape
+          ctx.beginPath();
+          ctx.moveTo(nx, noteY - noteRadius);
+          ctx.lineTo(nx + noteRadius * 1.2, noteY);
+          ctx.lineTo(nx, noteY + noteRadius);
+          ctx.lineTo(nx - noteRadius * 1.2, noteY);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          // Action Icon / Letter in center
+          ctx.fillStyle = '#ffffff';
+          ctx.font = '900 12px Orbitron';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(this.laneKeys[lane].toUpperCase(), nx, noteY);
+
+          ctx.restore();
+        }
+      }
+
+      drawFloatingTexts(ctx) {
+        for (let i = 0; i < this.floatingTexts.length; i++) {
+          const ft = this.floatingTexts[i];
+          ctx.save();
+          ctx.globalAlpha = ft.alpha;
+          ctx.fillStyle = ft.color;
+          ctx.font = `900 ${ft.size}px Orbitron`;
+          ctx.shadowColor = ft.color;
+          ctx.shadowBlur = 10;
+          ctx.textAlign = 'center';
+          ctx.fillText(ft.text, ft.x, ft.y);
+          ctx.restore();
+        }
+      }
+    }
+
+    /* Particle Helper Class */
+    class Particle {
+      constructor(x, y, color, vx, vy, size = 3, life = 0.5) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        this.vx = vx;
+        this.vy = vy;
+        this.size = size;
+        this.life = life;
+        this.maxLife = life;
+      }
+
+      update(dt) {
+        this.x += this.vx * dt * 60;
+        this.y += this.vy * dt * 60;
+        this.life -= dt;
+      }
+
+      isDead() {
+        return this.life <= 0;
+      }
+
+      draw(ctx) {
+        const alpha = Math.max(0, this.life / this.maxLife);
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = this.color;
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 6;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    // Initialize Game on Window Load
+    window.addEventListener('load', () => {
+      window.game = new RhythmBladeGame();
+    });
+  </script>
+</body>
+</html>

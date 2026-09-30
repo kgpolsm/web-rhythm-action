@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>상옥이의 머리털 심기</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: linear-gradient(135deg, #1a0a2e 0%, #2d1b4e 50%, #1a0a2e 100%);
+            min-height: 100vh;
+            font-family: 'Noto Sans KR', sans-serif;
+            color: #e0e0e0;
+            overflow-x: hidden;
+        }
+
+        .game-container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+        header { text-align: center; padding: 20px 0; border-bottom: 2px solid #2a2a4a; margin-bottom: 20px; }
+
+        header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #ff6b9d, #ffd700, #ff6b9d);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shine 3s linear infinite;
+        }
+
+        @keyframes shine { to { background-position: 200% center; } }
+
+        .stats-bar { display: flex; justify-content: center; gap: 30px; margin-top: 10px; flex-wrap: wrap; }
+
+        .stat-item {
+            display: flex; align-items: center; gap: 8px;
+            background: rgba(255,255,255,0.05); padding: 8px 16px;
+            border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .stat-item .icon { font-size: 1.3rem; }
+        .stat-item .value { font-weight: bold; color: #ffd700; }
+
+        .main-content { display: grid; grid-template-columns: 1fr 350px; gap: 20px; }
+        @media (max-width: 900px) { .main-content { grid-template-columns: 1fr; } }
+
+        /* Hair Planting Area */
+        .planting-section {
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px; padding: 25px; text-align: center;
+        }
+
+        .character-display {
+            position: relative; width: 250px; height: 300px; margin: 0 auto 20px;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .character {
+            font-size: 8rem;
+            cursor: pointer;
+            transition: transform 0.1s;
+            user-select: none;
+            position: relative;
+        }
+
+        .character:active { transform: scale(0.95); }
+
+        .character.planting { animation: plant-bounce 0.3s; }
+
+        @keyframes plant-bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .hair-container {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 60px;
+            pointer-events: none;
+        }
+
+        .hair-strand {
+            position: absolute;
+            width: 4px;
+            height: 20px;
+            background: linear-gradient(180deg, #8B4513, #D2691E);
+            border-radius: 2px;
+            animation: hair-grow 0.5s ease-out;
+        }
+
+        @keyframes hair-grow {
+            0% { height: 0; opacity: 0; }
+            100% { height: 20px; opacity: 1; }
+        }
+
+        .plant-btn {
+            padding: 20px 50px;
+            font-size: 1.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #ff6b9d, #ff8fab);
+            border: none;
+            color: #fff;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 20px rgba(255, 107, 157, 0.4);
+            margin-top: 20px;
+        }
+
+        .plant-btn:hover { transform: translateY(-3px); box-shadow: 0 6px 30px rgba(255, 107, 157, 0.6); }
+        .plant-btn:active { transform: translateY(0); }
+
+        .hair-count {
+            font-size: 1.2rem;
+            color: #888;
+            margin-top: 15px;
+        }
+
+        .hair-count span { color: #ffd700; font-weight: bold; }
+
+        /* Sidebar */
+        .sidebar { display: flex; flex-direction: column; gap: 15px; }
+
+        .panel {
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px; padding: 20px;
+        }
+
+        .panel h3 {
+            margin-bottom: 15px; color: #ffd700;
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 1rem;
+        }
+
+        .upgrade-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .upgrade-item:last-child { margin-bottom: 0; }
+
+        .upgrade-info { flex: 1; }
+        .upgrade-name { font-weight: bold; font-size: 0.95rem; }
+        .upgrade-desc { font-size: 0.75rem; color: #888; margin-top: 2px; }
+        .upgrade-level { font-size: 0.8rem; color: #ffd700; margin-top: 2px; }
+
+        .upgrade-btn {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            border: none;
+            color: #000;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .upgrade-btn:hover { transform: scale(1.05); }
+        .upgrade-btn:disabled { background: #333; color: #666; cursor: not-allowed; transform: none; }
+
+        /* Pet System */
+        .pet-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+
+        .pet-card {
+            background: rgba(0,0,0,0.3);
+            border: 2px solid #2a2a4a;
+            border-radius: 12px;
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .pet-card:hover { border-color: #ffd700; transform: scale(1.05); }
+        .pet-card.active { border-color: #ffd700; box-shadow: 0 0 15px rgba(255, 215, 0, 0.3); }
+        .pet-card.locked { opacity: 0.4; filter: grayscale(1); }
+
+        .pet-card .pet-sprite { font-size: 2.5rem; margin-bottom: 5px; }
+        .pet-card .pet-name { font-size: 0.8rem; font-weight: bold; }
+        .pet-card .pet-bonus { font-size: 0.7rem; color: #7fff7f; margin-top: 3px; }
+        .pet-card .pet-cost { font-size: 0.7rem; color: #ffd700; margin-top: 3px; }
+
+        /* Auto Plant */
+        .auto-plant-section { margin-top: 15px; }
+
+        .auto-plant-toggle {
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            padding: 12px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .toggle-switch {
+            position: relative; width: 50px; height: 26px;
+            background: #333; border-radius: 13px; cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle-switch.active { background: #27ae60; }
+        .toggle-switch::after {
+            content: ''; position: absolute; top: 3px; left: 3px;
+            width: 20px; height: 20px; background: #fff;
+            border-radius: 50%; transition: transform 0.3s;
+        }
+        .toggle-switch.active::after { transform: translateX(24px); }
+
+        /* Damage Numbers */
+        .damage-number {
+            position: absolute;
+            font-weight: 900;
+            font-size: 1.5rem;
+            color: #ffd700;
+            pointer-events: none;
+            animation: damage-float 1s ease-out forwards;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            z-index: 100;
+        }
+
+        @keyframes damage-float {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-80px) scale(1.5); }
+        }
+
+        /* Combo */
+        .combo-display {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 5rem;
+            font-weight: 900;
+            color: #ff6b9d;
+            text-shadow: 0 0 30px rgba(255, 107, 157, 0.5);
+            pointer-events: none;
+            opacity: 0;
+            z-index: 1000;
+        }
+
+        .combo-display.show { animation: combo-pop 0.5s ease-out; }
+
+        @keyframes combo-pop {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        /* Save indicator */
+        .save-indicator {
+            position: fixed; bottom: 20px; right: 20px;
+            background: rgba(0,0,0,0.8); padding: 8px 16px;
+            border-radius: 20px; font-size: 0.75rem; color: #888;
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .save-indicator.show { opacity: 1; }
+
+        /* Pet level */
+        .pet-level {
+            display: flex; align-items: center; justify-content: center; gap: 5px;
+            margin-top: 5px; font-size: 0.75rem;
+        }
+
+        .pet-level-btn {
+            width: 20px; height: 20px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem;
+        }
+
+        .pet-level-btn:hover { background: rgba(255,255,255,0.2); }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <header>
+            <h1>상옥이의 머리털 심기</h1>
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <span class="icon">💰</span>
+                    <span class="value" id="goldDisplay">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="icon">💇</span>
+                    <span class="value" id="hairCountDisplay">0</span>
+                    <span style="color:#666; font-size:0.8rem;">털</span>
+                </div>
+                <div class="stat-item">
+                    <span class="icon">⚡</span>
+                    <span class="value" id="goldPerHairDisplay">1</span>
+                    <span style="color:#666; font-size:0.8rem;">골드/털</span>
+                </div>
+                <div class="stat-item">
+                    <span class="icon">🤖</span>
+                    <span class="value" id="autoRateDisplay">0</span>
+                    <span style="color:#666; font-size:0.8rem;">자동/초</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="left-panel">
+                <div class="planting-section">
+                    <div class="character-display" id="characterDisplay">
+                        <div class="hair-container" id="hairContainer"></div>
+                        <div class="character" id="character">👧</div>
+                    </div>
+
+                    <button class="plant-btn" id="plantBtn" onclick="plantHair()">
+                        💇 머리털 심기
+                    </button>
+
+                    <div class="hair-count">
+                        심은 털: <span id="hairCount">0</span>개 |
+                        획득 골드: <span id="totalGoldEarned">0</span>
+                    </div>
+
+                    <div class="auto-plant-section">
+                        <div class="auto-plant-toggle">
+                            <span style="font-size:0.85rem; color:#888;">자동 심기</span>
+                            <div class="toggle-switch" id="autoPlantToggle" onclick="toggleAutoPlant()"></div>
+                            <span id="autoPlantStatus" style="font-size:0.8rem; color:#666;">OFF</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <!-- Upgrades -->
+                <div class="panel">
+                    <h3>⬆️ 업그레이드</h3>
+                    <div class="upgrade-item">
+                        <div class="upgrade-info">
+                            <div class="upgrade-name">⚡ 머리 빨리 심기</div>
+                            <div class="upgrade-desc">자동 심기 속도 +1/초</div>
+                            <div class="upgrade-level">Lv.<span id="speedLevel">0</span></div>
+                        </div>
+                        <button class="upgrade-btn" id="speedBtn" onclick="buySpeedUpgrade()">
+                            💰 <span id="speedCost">100</span>
+                        </button>
+                    </div>
+                    <div class="upgrade-item">
+                        <div class="upgrade-info">
+                            <div class="upgrade-name">💎 획득 골드량 증가</div>
+                            <div class="upgrade-desc">털당 골드 +1</div>
+                            <div class="upgrade-level">Lv.<span id="goldLevel">0</span></div>
+                        </div>
+                        <button class="upgrade-btn" id="goldBtn" onclick="buyGoldUpgrade()">
+                            💰 <span id="goldCost">150</span>
+                        </button>
+                    </div>
+                    <div class="upgrade-item">
+                        <div class="upgrade-info">
+                            <div class="upgrade-name">🎯 클릭 파워</div>
+                            <div class="upgrade-desc">수동 심기 시 추가 털 +1</div>
+                            <div class="upgrade-level">Lv.<span id="clickLevel">0</span></div>
+                        </div>
+                        <button class="upgrade-btn" id="clickBtn" onclick="buyClickUpgrade()">
+                            💰 <span id="clickCost">200</span>
+                        </button>
+                    </div>
+                    <div class="upgrade-item">
+                        <div class="upgrade-info">
+                            <div class="upgrade-name">💥 크리티컬</div>
+                            <div class="upgrade-desc">크리티컬 확률 +5% (2배 골드)</div>
+                            <div class="upgrade-level">Lv.<span id="critLevel">0</span></div>
+                        </div>
+                        <button class="upgrade-btn" id="critBtn" onclick="buyCritUpgrade()">
+                            💰 <span id="critCost">500</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Pets -->
+                <div class="panel">
+                    <h3>🐾 펫</h3>
+                    <div class="pet-grid" id="petGrid"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="combo-display" id="comboDisplay"></div>
+    <div class="save-indicator" id="saveIndicator">💾 저장됨</div>
+
+    <script>
+        // ==================== PET DEFINITIONS ====================
+        const PETS = [
+            { id: 1, name: '강아지', sprite: '🐕', bonus: '골드 +10%', cost: 500, type: 'goldPercent', value: 0.1 },
+            { id: 2, name: '고양이', sprite: '🐈', bonus: '자동 심기 +2/초', cost: 800, type: 'autoSpeed', value: 2 },
+            { id: 3, name: '토끼', sprite: '🐰', bonus: '클릭 파워 +2', cost: 1000, type: 'clickPower', value: 2 },
+            { id: 4, name: '여우', sprite: '🦊', bonus: '크리티컬 +10%', cost: 1500, type: 'critChance', value: 0.1 },
+            { id: 5, name: '곰', sprite: '🐻', bonus: '골드 +25%', cost: 2000, type: 'goldPercent', value: 0.25 },
+            { id: 6, name: '늑대', sprite: '🐺', bonus: '자동 심기 +5/초', cost: 3000, type: 'autoSpeed', value: 5 },
+            { id: 7, name: '사자', sprite: '🦁', bonus: '클릭 파워 +5', cost: 4000, type: 'clickPower', value: 5 },
+            { id: 8, name: '용', sprite: '🐉', bonus: '골드 +50%', cost: 10000, type: 'goldPercent', value: 0.5 },
+            { id: 9, name: '유니콘', sprite: '🦄', bonus: '전체 능력 +20%', cost: 20000, type: 'all', value: 0.2 }
+        ];
+
+        // ==================== GAME STATE ====================
+        let gameState = {
+            gold: 0,
+            totalGoldEarned: 0,
+            hairCount: 0,
+            upgrades: {
+                speed: 0,
+                gold: 0,
+                click: 0,
+                crit: 0
+            },
+            pets: {}, // { petId: level }
+            activePet: null,
+            autoPlant: false,
+            autoPlantTimer: null,
+            combo: 0,
+            lastPlantTime: 0
+        };
+
+        // ==================== CALCULATIONS ====================
+        function getGoldPerHair() {
+            let base = 1 + gameState.upgrades.gold;
+            // Pet bonuses
+            for (const [petId, level] of Object.entries(gameState.pets)) {
+                const pet = PETS.find(p => p.id === Number(petId));
+                if (pet && pet.type === 'goldPercent') {
+                    base *= (1 + pet.value * level);
+                }
+                if (pet && pet.type === 'all') {
+                    base *= (1 + pet.value * level);
+                }
+            }
+            return Math.floor(base);
+        }
+
+        function getAutoSpeed() {
+            let speed = gameState.upgrades.speed;
+            for (const [petId, level] of Object.entries(gameState.pets)) {
+                const pet = PETS.find(p => p.id === Number(petId));
+                if (pet && pet.type === 'autoSpeed') {
+                    speed += pet.value * level;
+                }
+                if (pet && pet.type === 'all') {
+                    speed += pet.value * level * 2;
+                }
+            }
+            return speed;
+        }
+
+        function getClickPower() {
+            let power = 1 + gameState.upgrades.click;
+            for (const [petId, level] of Object.entries(gameState.pets)) {
+                const pet = PETS.find(p => p.id === Number(petId));
+                if (pet && pet.type === 'clickPower') {
+                    power += pet.value * level;
+                }
+                if (pet && pet.type === 'all') {
+                    power += pet.value * level;
+                }
+            }
+            return power;
+        }
+
+        function getCritChance() {
+            let chance = 0.05 + gameState.upgrades.crit * 0.05;
+            for (const [petId, level] of Object.entries(gameState.pets)) {
+                const pet = PETS.find(p => p.id === Number(petId));
+                if (pet && pet.type === 'critChance') {
+                    chance += pet.value * level;
+                }
+                if (pet && pet.type === 'all') {
+                    chance += pet.value * level * 0.5;
+                }
+            }
+            return Math.min(chance, 0.8);
+        }
+
+        function getUpgradeCost(type) {
+            const costs = {
+                speed: Math.floor(100 * Math.pow(1.8, gameState.upgrades.speed)),
+                gold: Math.floor(150 * Math.pow(1.8, gameState.upgrades.gold)),
+                click: Math.floor(200 * Math.pow(1.8, gameState.upgrades.click)),
+                crit: Math.floor(500 * Math.pow(2.0, gameState.upgrades.crit))
+            };
+            return costs[type];
+        }
+
+        function getPetUpgradeCost(petId) {
+            const level = gameState.pets[petId] || 0;
+            const pet = PETS.find(p => p.id === petId);
+            return Math.floor(pet.cost * Math.pow(1.5, level));
+        }
+
+        // ==================== HAIR PLANTING ====================
+        function plantHair() {
+            const now = Date.now();
+            const timeDiff = now - gameState.lastPlantTime;
+
+            // Combo system
+            if (timeDiff < 500) {
+                gameState.combo++;
+                if (gameState.combo > 0 && gameState.combo % 10 === 0) {
+                    showCombo(gameState.combo);
+                }
+            } else {
+                gameState.combo = 1;
+            }
+            gameState.lastPlantTime = now;
+
+            const clickPower = getClickPower();
+            const goldPerHair = getGoldPerHair();
+            const critChance = getCritChance();
+
+            let totalGold = 0;
+            let totalHair = 0;
+
+            for (let i = 0; i < clickPower; i++) {
+                let gold = goldPerHair;
+                let isCrit = Math.random() < critChance;
+                if (isCrit) gold *= 2;
+
+                // Combo bonus
+                gold = Math.floor(gold * (1 + gameState.combo * 0.01));
+
+                totalGold += gold;
+                totalHair++;
+            }
+
+            gameState.gold += totalGold;
+            gameState.totalGoldEarned += totalGold;
+            gameState.hairCount += totalHair;
+
+            // Visual feedback
+            const character = document.getElementById('character');
+            character.classList.add('planting');
+            setTimeout(() => character.classList.remove('planting'), 300);
+
+            // Show damage number
+            showDamageNumber(totalGold, totalHair);
+
+            // Add hair visual
+            addHairVisual(totalHair);
+
+            updateUI();
+            saveGame();
+        }
+
+        function showDamageNumber(gold, hair) {
+            const display = document.getElementById('characterDisplay');
+            const dmgNum = document.createElement('div');
+            dmgNum.className = 'damage-number';
+            dmgNum.textContent = `+${formatNumber(gold)} 💰`;
+            dmgNum.style.left = `${50 + (Math.random() - 0.5) * 40}%`;
+            dmgNum.style.top = '30%';
+            display.appendChild(dmgNum);
+            setTimeout(() => dmgNum.remove(), 1000);
+        }
+
+        function addHairVisual(count) {
+            const container = document.getElementById('hairContainer');
+            const maxVisuals = 20;
+            const visualsToAdd = Math.min(count, maxVisuals);
+
+            for (let i = 0; i < visualsToAdd; i++) {
+                const hair = document.createElement('div');
+                hair.className = 'hair-strand';
+                hair.style.left = `${20 + Math.random() * 60}%`;
+                hair.style.top = `${Math.random() * 30}px`;
+                hair.style.height = `${10 + Math.random() * 20}px`;
+                container.appendChild(hair);
+
+                // Remove old hairs if too many
+                while (container.children.length > 50) {
+                    container.removeChild(container.firstChild);
+                }
+            }
+        }
+
+        function showCombo(combo) {
+            const display = document.getElementById('comboDisplay');
+            display.textContent = `${combo} 콤보!`;
+            display.classList.add('show');
+            setTimeout(() => display.classList.remove('show'), 500);
+        }
+
+        // ==================== UPGRADES ====================
+        function buySpeedUpgrade() {
+            const cost = getUpgradeCost('speed');
+            if (gameState.gold < cost) return;
+            gameState.gold -= cost;
+            gameState.upgrades.speed++;
+            updateUI();
+            saveGame();
+        }
+
+        function buyGoldUpgrade() {
+            const cost = getUpgradeCost('gold');
+            if (gameState.gold < cost) return;
+            gameState.gold -= cost;
+            gameState.upgrades.gold++;
+            updateUI();
+            saveGame();
+        }
+
+        function buyClickUpgrade() {
+            const cost = getUpgradeCost('click');
+            if (gameState.gold < cost) return;
+            gameState.gold -= cost;
+            gameState.upgrades.click++;
+            updateUI();
+            saveGame();
+        }
+
+        function buyCritUpgrade() {
+            const cost = getUpgradeCost('crit');
+            if (gameState.gold < cost) return;
+            gameState.gold -= cost;
+            gameState.upgrades.crit++;
+            updateUI();
+            saveGame();
+        }
+
+        // ==================== PETS ====================
+        function buyOrUpgradePet(petId) {
+            const pet = PETS.find(p => p.id === petId);
+            const currentLevel = gameState.pets[petId] || 0;
+            const cost = currentLevel === 0 ? pet.cost : getPetUpgradeCost(petId);
+
+            if (gameState.gold < cost) return;
+
+            gameState.gold -= cost;
+            gameState.pets[petId] = currentLevel + 1;
+
+            // Auto-activate if no active pet
+            if (!gameState.activePet) {
+                gameState.activePet = petId;
+            }
+
+            updateUI();
+            saveGame();
+        }
+
+        function selectPet(petId) {
+            if (!gameState.pets[petId]) return;
+            gameState.activePet = petId;
+            updateUI();
+            saveGame();
+        }
+
+        function renderPets() {
+            const grid = document.getElementById('petGrid');
+            grid.innerHTML = '';
+
+            for (const pet of PETS) {
+                const level = gameState.pets[pet.id] || 0;
+                const isOwned = level > 0;
+                const isActive = gameState.activePet === pet.id;
+                const cost = isOwned ? getPetUpgradeCost(pet.id) : pet.cost;
+
+                const card = document.createElement('div');
+                card.className = `pet-card ${isOwned ? '' : 'locked'} ${isActive ? 'active' : ''}`;
+                card.innerHTML = `
+                    <div class="pet-sprite">${pet.sprite}</div>
+                    <div class="pet-name">${pet.name}</div>
+                    <div class="pet-bonus">${pet.bonus}</div>
+                    ${isOwned ? `<div class="pet-level">Lv.${level}</div>` : `<div class="pet-cost">💰 ${formatNumber(cost)}</div>`}
+                `;
+                card.onclick = () => {
+                    if (isOwned) {
+                        if (isActive) {
+                            // Upgrade
+                            buyOrUpgradePet(pet.id);
+                        } else {
+                            // Select
+                            selectPet(pet.id);
+                        }
+                    } else {
+                        // Buy
+                        buyOrUpgradePet(pet.id);
+                    }
+                };
+                grid.appendChild(card);
+            }
+        }
+
+        // ==================== AUTO PLANT ====================
+        function toggleAutoPlant() {
+            gameState.autoPlant = !gameState.autoPlant;
+            document.getElementById('autoPlantToggle').classList.toggle('active', gameState.autoPlant);
+            document.getElementById('autoPlantStatus').textContent = gameState.autoPlant ? 'ON' : 'OFF';
+            document.getElementById('autoPlantStatus').style.color = gameState.autoPlant ? '#27ae60' : '#666';
+
+            if (gameState.autoPlant) {
+                startAutoPlant();
+            } else {
+                stopAutoPlant();
+            }
+        }
+
+        function startAutoPlant() {
+            if (gameState.autoPlantTimer) return;
+            gameState.autoPlantTimer = setInterval(() => {
+                const speed = getAutoSpeed();
+                if (speed <= 0) return;
+
+                const goldPerHair = getGoldPerHair();
+                const critChance = getCritChance();
+                let totalGold = 0;
+
+                for (let i = 0; i < speed; i++) {
+                    let gold = goldPerHair;
+                    if (Math.random() < critChance) gold *= 2;
+                    totalGold += gold;
+                }
+
+                gameState.gold += totalGold;
+                gameState.totalGoldEarned += totalGold;
+                gameState.hairCount += speed;
+
+                updateUI();
+            }, 1000);
+        }
+
+        function stopAutoPlant() {
+            if (gameState.autoPlantTimer) {
+                clearInterval(gameState.autoPlantTimer);
+                gameState.autoPlantTimer = null;
+            }
+        }
+
+        // ==================== UI UPDATE ====================
+        function updateUI() {
+            document.getElementById('goldDisplay').textContent = formatNumber(gameState.gold);
+            document.getElementById('hairCountDisplay').textContent = formatNumber(gameState.hairCount);
+            document.getElementById('hairCount').textContent = formatNumber(gameState.hairCount);
+            document.getElementById('totalGoldEarned').textContent = formatNumber(gameState.totalGoldEarned);
+            document.getElementById('goldPerHairDisplay').textContent = formatNumber(getGoldPerHair());
+            document.getElementById('autoRateDisplay').textContent = getAutoSpeed();
+
+            // Upgrade levels and costs
+            document.getElementById('speedLevel').textContent = gameState.upgrades.speed;
+            document.getElementById('goldLevel').textContent = gameState.upgrades.gold;
+            document.getElementById('clickLevel').textContent = gameState.upgrades.click;
+            document.getElementById('critLevel').textContent = gameState.upgrades.crit;
+
+            document.getElementById('speedCost').textContent = formatNumber(getUpgradeCost('speed'));
+            document.getElementById('goldCost').textContent = formatNumber(getUpgradeCost('gold'));
+            document.getElementById('clickCost').textContent = formatNumber(getUpgradeCost('click'));
+            document.getElementById('critCost').textContent = formatNumber(getUpgradeCost('crit'));
+
+            // Disable buttons if can't afford
+            document.getElementById('speedBtn').disabled = gameState.gold < getUpgradeCost('speed');
+            document.getElementById('goldBtn').disabled = gameState.gold < getUpgradeCost('gold');
+            document.getElementById('clickBtn').disabled = gameState.gold < getUpgradeCost('click');
+            document.getElementById('critBtn').disabled = gameState.gold < getUpgradeCost('crit');
+
+            // Pets
+            renderPets();
+        }
+
+        function formatNumber(num) {
+            if (num >= 1000000000) return (num / 1000000000).toFixed(1) + 'B';
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return Math.floor(num).toString();
+        }
+
+        // ==================== SAVE/LOAD ====================
+        function saveGame() {
+            localStorage.setItem('sangokHairSave', JSON.stringify(gameState));
+            const indicator = document.getElementById('saveIndicator');
+            indicator.classList.add('show');
+            setTimeout(() => indicator.classList.remove('show'), 1500);
+        }
+
+        function loadGame() {
+            const save = localStorage.getItem('sangokHairSave');
+            if (save) {
+                try { gameState = { ...gameState, ...JSON.parse(save) }; } catch (e) { console.error('Save load failed:', e); }
+            }
+        }
+
+        // ==================== INIT ====================
+        loadGame();
+        updateUI();
+
+        // Auto save every 30 seconds
+        setInterval(saveGame, 30000);
+
+        // Keyboard shortcut
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                plantHair();
+            }
+        });
+    </script>
+</body>
+</html>

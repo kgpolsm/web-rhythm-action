@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>아케이드 & 액션 게임 모음 포털</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Noto+Sans+KR:wght@400;700;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090a16;
+      --card-bg: rgba(22, 19, 44, 0.7);
+      --border: rgba(255, 255, 255, 0.12);
+      --primary: #ff416c;
+      --accent: #00f2fe;
+      --gold: #ffd700;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: #fff;
+      font-family: 'Noto Sans KR', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .title {
+      font-family: 'Cinzel', serif;
+      font-size: 38px;
+      font-weight: 900;
+      letter-spacing: 3px;
+      background: linear-gradient(135deg, #00f2fe, #ff416c, #ffd700);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      font-size: 15px;
+      color: #aaa;
+      letter-spacing: 2px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      max-width: 1000px;
+      width: 100%;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      text-decoration: none;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      backdrop-filter: blur(8px);
+      transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, #ff416c, #8a2be2, #00f2fe);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .card:hover {
+      transform: translateY(-6px);
+      border-color: var(--accent);
+      box-shadow: 0 12px 30px rgba(0, 242, 254, 0.25);
+    }
+    .card:hover::before {
+      opacity: 1;
+    }
+    .card-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+      align-self: flex-start;
+      background: rgba(255, 65, 108, 0.2);
+      color: #ff416c;
+      border: 1px solid rgba(255, 65, 108, 0.4);
+    }
+    .card.featured .card-badge {
+      background: rgba(0, 242, 254, 0.2);
+      color: #00f2fe;
+      border-color: rgba(0, 242, 254, 0.4);
+    }
+    .card-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .card-desc {
+      font-size: 13px;
+      color: #bbb;
+      line-height: 1.5;
+      margin-bottom: 20px;
+      flex: 1;
+    }
+    .card-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-weight: 700;
+      font-size: 14px;
+      color: #00f2fe;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="title">WEB GAME LOUNGE</div>
+    <div class="subtitle">브라우저에서 바로 즐기는 인터랙티브 게임 컬렉션</div>
+  </div>
+
+  <div class="grid">
+    <a href="rhythm-action.html" class="card featured">
+      <div>
+        <span class="card-badge">✨ NEW FEATURED</span>
+        <div class="card-title">⚔️ 리듬 블레이드: 판타지 배틀</div>
+        <div class="card-desc">신스 비트에 맞춰 적 보스를 타격하는 액션 판타지 리듬 웹게임! 콤보와 리듬 버스트 모드를 활용해 3대 보스를 토벌하세요.</div>
+      </div>
+      <div class="card-btn">게임 플레이하기 →</div>
+    </a>
+
+    <a href="dungeon-rpg.html" class="card">
+      <div>
+        <span class="card-badge">RPG</span>
+        <div class="card-title">🏰 던전 RPG (Dungeon RPG)</div>
+        <div class="card-desc">미지의 던전을 탐험하며 몬스터와 전투하고 아이템을 수집하는 판타지 던전 크롤러 게임.</div>
+      </div>
+      <div class="card-btn">게임 플레이하기 →</div>
+    </a>
+
+    <a href="monster-enhance.html" class="card">
+      <div>
+        <span class="card-badge">SIMULATION</span>
+        <div class="card-title">🧪 몬스터 강화 (Monster Enhance)</div>
+        <div class="card-desc">몬스터를 육성하고 강화하여 강력한 스탯을 얻는 전략 시뮬레이션 게임.</div>
+      </div>
+      <div class="card-btn">게임 플레이하기 →</div>
+    </a>
+
+    <a href="pong.html" class="card">
+      <div>
+        <span class="card-badge">CLASSIC</span>
+        <div class="card-title">🏓 퐁 클래식 (Pong Battle)</div>
+        <div class="card-desc">고전 아케이드의 묘미를 살린 반응속도 중심의 핑퐁 대전 게임.</div>
+      </div>
+      <div class="card-btn">게임 플레이하기 →</div>
+    </a>
+
+    <a href="sangok-hair.html" class="card">
+      <div>
+        <span class="card-badge">CASUAL</span>
+        <div class="card-title">💇 삼국 헤어살롱 (Sangok Hair)</div>
+        <div class="card-desc">삼국지 명장들의 스타일을 책임지는 유쾌한 캐주얼 미용실 게임.</div>
+      </div>
+      <div class="card-btn">게임 플레이하기 →</div>
+    </a>
+  </div>
+</body>
+</html>
